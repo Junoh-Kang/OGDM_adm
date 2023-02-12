@@ -63,13 +63,13 @@ def load_config(cfg_dir):
 
 def create_argparser_and_config():
     tmp_parser = argparse.ArgumentParser()
-    tmp_parser.add_argument('--config', default='./configs/default.yaml', type=str)
-    tmp = load_config('./configs/default.yaml')
+    tmp_parser.add_argument('--config', type=str)
+    tmp = load_config('./configs/_default.yaml')
     add_dict_to_argparser(tmp_parser, tmp)
     tmp_args = tmp_parser.parse_args()
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--config', default='./configs/default.yaml', type=str)
+    parser.add_argument('--config', default=tmp_args.config, type=str)
     cfg = load_config(tmp_args.config)
     add_dict_to_argparser(parser, cfg)
     args = parser.parse_args()
