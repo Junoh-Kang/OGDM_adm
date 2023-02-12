@@ -1,0 +1,44 @@
+# project:
+project_name: "test"
+exp_name: "test"
+data_dir: "./data"
+image_size: 64
+
+# diffusion:
+learn_sigma: False
+diffusion_steps: 1000
+noise_schedule: "linear"
+timestep_respacing: ""
+use_kl: False
+predict_xstart: False
+rescale_timesteps: False
+rescale_learned_sigams: False
+
+# model:
+num_channels: 128
+num_res_blocks: 2
+num_heads: 4
+num_heads_upsample: -1
+num_head_channels: -1
+attention_resolutions: "16,8"
+channel_mult: ""
+dropout: 0.0
+class_cond: False
+use_checkpoint: False
+use_scale_shift_norm: True
+resblock_updown: False
+use_fp16: False
+use_new_attention_order: False
+  
+# training:
+batch_size: 64
+microbatch: -1
+lr: 1e-3
+ema_rate: 0.9999
+log_interval: 10
+save_interval: 10000
+resume_checkpoint: ""
+fp16_scale_growth: 0.001
+schedule_sampler: "uniform"
+weight_decay: 0.0
+lr_anneal_steps: 0 

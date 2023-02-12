@@ -1,7 +1,7 @@
 """
 Train a diffusion model on images.
 """
-import yaml
+
 import argparse
 
 from guided_diffusion import dist_util, logger
@@ -17,10 +17,9 @@ from guided_diffusion.train_util import TrainLoop
 
 
 def main():
-    args, cfg = create_argparser_and_config()
-
+    args = create_argparser().parse_args()
     dist_util.setup_dist()
-    logger.configure(dir=args.log_dir, project=args.project, exp=args.exp)
+    logger.configure(dir="./logs", project="test", exp="test")
 
     logger.log("creating model and diffusion...")
     model, diffusion = create_model_and_diffusion(
@@ -56,25 +55,28 @@ def main():
         lr_anneal_steps=args.lr_anneal_steps,
     ).run_loop()
 
-def load_config(cfg_dir):
-    with open(cfg_dir) as f: 
-        cfg = yaml.load(f, Loader=yaml.FullLoader)
-    return cfg
 
-def create_argparser_and_config():
-    tmp_parser = argparse.ArgumentParser()
-    tmp_parser.add_argument('--config', default='./configs/default.yaml', type=str)
-    tmp = load_config('./configs/default.yaml')
-    add_dict_to_argparser(tmp_parser, tmp)
-    tmp_args = tmp_parser.parse_args()
-
+def create_argparser():
+    defaults = dict(
+        data_dir="",
+        schedule_sampler="uniform",
+        lr=1e-4,
+        weight_decay=0.0,
+        lr_anneal_steps=0,
+        batch_size=1,
+        microbatch=-1,  # -1 disables microbatches
+        ema_rate="0.9999",  # comma-separated list of EMA values
+        log_interval=10,
+        save_interval=10000,
+        resume_checkpoint="",
+        use_fp16=False,
+        fp16_scale_growth=1e-3,
+    )
+    defaults.update(model_and_diffusion_defaults())
     parser = argparse.ArgumentParser()
-    parser.add_argument('--config', default='./configs/default.yaml', type=str)
-    cfg = load_config(tmp_args.config)
-    add_dict_to_argparser(parser, cfg)
-    args = parser.parse_args()
+    add_dict_to_argparser(parser, defaults)
+    return parser
 
-    return args, args_to_dict(args, cfg.keys())
 
 if __name__ == "__main__":
     main()

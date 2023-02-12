@@ -22,6 +22,7 @@ def diffusion_defaults():
         rescale_learned_sigmas=False,
     )
 
+
 def classifier_defaults():
     """
     Defaults for classifier models.
@@ -36,6 +37,7 @@ def classifier_defaults():
         classifier_resblock_updown=True,  # False
         classifier_pool="attention",
     )
+
 
 def model_and_diffusion_defaults():
     """
@@ -61,10 +63,12 @@ def model_and_diffusion_defaults():
     res.update(diffusion_defaults())
     return res
 
+
 def classifier_and_diffusion_defaults():
     res = classifier_defaults()
     res.update(diffusion_defaults())
     return res
+
 
 def create_model_and_diffusion(
     image_size,
@@ -121,32 +125,6 @@ def create_model_and_diffusion(
     )
     return model, diffusion
 
-def create_model_and_diffusion_from_config(cfg):
-    return create_model_and_diffusion(
-        image_size = cfg['data']['image_size'],
-        num_channels = cfg['model']['num_channels'],
-        num_res_blocks = cfg['model']['num_res_blocks'],
-        num_heads = cfg['model']['num_heads'],
-        num_heads_upsample = cfg['model']['num_heads_upsample'],
-        num_head_channels = cfg['model']['num_head_channels'],
-        attention_resolutions = cfg['model']['attention_resolutions'],
-        channel_mult = cfg['model']['channel_mult'],
-        dropout = cfg['model']['dropout'],
-        class_cond = cfg['model']['class_cond'],
-        use_scale_shift_norm = cfg['model']['use_scale_shift_norm'],
-        resblock_updown = cfg['model']['resblock_updown'],
-        use_fp16 = cfg['model']['use_fp16'],
-        use_new_attention_order = cfg['model']['use_new_attention_order'],
-        learn_sigma = cfg['diffusion']['learn_sigma'],
-        diffusion_steps = cfg['diffusion']['diffusion_steps'],
-        noise_schedule = cfg['diffusion']['noise_schedule'],
-        timestep_respacing = cfg['diffusion']['timestep_respacing'],
-        use_kl = cfg['diffusion']['use_kl'],
-        predict_xstart = cfg['diffusion']['predict_xstart'],
-        rescale_timesteps = cfg['diffusion']['rescale_timesteps'],
-        rescale_learned_sigmas = cfg['diffusion']['rescale_learned_sigmas'],
-        use_checkpoint = cfg['training']['use_checkpoint'],
-    )
 
 def create_model(
     image_size,
@@ -452,7 +430,7 @@ def add_dict_to_argparser(parser, default_dict):
             v_type = str
         elif isinstance(v, bool):
             v_type = str2bool
-        if k in ['lr',]:
+        if k == 'lr':
             v_type = float
         parser.add_argument(f"--{k}", default=v, type=v_type)
 
