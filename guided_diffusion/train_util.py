@@ -2,12 +2,15 @@ import copy
 import functools
 import os
 # import wandb 
-
 import blobfile as bf
+import numpy as np
 import torch as th
 import torch.distributed as dist
 from torch.nn.parallel.distributed import DistributedDataParallel as DDP
 from torch.optim import AdamW
+
+from PIL import Image
+import torchvision
 
 from . import dist_util, logger
 from .fp16_util import MixedPrecisionTrainer
@@ -33,6 +36,7 @@ class TrainLoop:
         ema_rate,
         log_interval,
         save_interval,
+        sample_num,
         resume_checkpoint,
         use_fp16=False,
         fp16_scale_growth=1e-3,
@@ -53,6 +57,8 @@ class TrainLoop:
         )
         self.log_interval = log_interval
         self.save_interval = save_interval
+        self.sample_num = sample_num
+        
         self.resume_checkpoint = resume_checkpoint
         self.use_fp16 = use_fp16
         self.fp16_scale_growth = fp16_scale_growth
@@ -162,6 +168,8 @@ class TrainLoop:
                 logger.dumpkvs()
             if self.step % self.save_interval == 0:
                 self.save()
+                self.sample_and_save(batch.shape)
+                self.sample_and_cal_fid(num_samples, batch.shape)        
                 # Run for a finite amount of time in integration tests.
                 if os.environ.get("DIFFUSION_TRAINING_TEST", "") and self.step > 0:
                     return
@@ -254,8 +262,39 @@ class TrainLoop:
                 th.save(self.opt.state_dict(), f)
         dist.barrier()
 
-    def sample(self):
+    def sample(self, sample_num, size):
+        """
+        return (sample_num, c, h, w) tensor
+        """
+        use_ddim = False
+        sample_fn = (
+            self.diffusion.p_sample_loop if not use_ddim else self.diffusion.ddim_sample_loop
+        )
+        self.model.eval()
+        logger.log("sampling")
+        all_images = []
         
+        while len(all_images) * size[0] < sample_num:                
+            sample = sample_fn(
+                self.model, 
+                (min(size[0], sample_num - len(all_images)*size[0]), *size[1:]),
+                clip_denoised=True,
+            )
+            sample = ((sample + 1) * 127.5).clamp(0, 255).to(th.uint8)
+            sample = sample.contiguous()
+            gathered_samples = [th.zeros_like(sample) for _ in range(dist.get_world_size())]
+            dist.all_gather(gathered_samples, sample)  # gather not supported with NCCL
+            all_images.extend([sample.cpu() for sample in gathered_samples])
+            logger.log(f"created {len(all_images) * size[0]} samples")
+
+        return th.cat(all_images)
+    
+    def sample_and_save(self, size):
+        sample = self.sample(sample_num=1, size=size)
+        sample = torchvision.utils.make_grid(sample,4).permute(1,2,0).numpy()
+        breakpoint()
+        Image.fromarray(sample).save('./test.png')
+
 
 def parse_resume_step_from_filename(filename):
     """

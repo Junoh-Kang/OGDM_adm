@@ -7,6 +7,7 @@ Docstrings have been added, as well as DDIM sampling and a new collection of bet
 
 import enum
 import math
+from tqdm import tqdm
 
 import numpy as np
 import torch as th
