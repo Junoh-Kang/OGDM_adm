@@ -477,10 +477,11 @@ def configure(dir='./logs', project='', exp='', config=None,
     """
     If comm is provided, average all numerical stats across that comm
     """
+    exp_name = exp + datetime.datetime.now().strftime("_%Y-%m-%d-%H-%M-%S-%f")
     dir = osp.join(
         dir,
         project,
-        datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S-%f_") + exp,
+        exp_name,
     )
     assert isinstance(dir, str)
 
@@ -490,7 +491,9 @@ def configure(dir='./logs', project='', exp='', config=None,
     with open(osp.join(dir, 'config.yaml'), 'w') as f:
         yaml.dump(config, f, default_flow_style=False)
 
-    wandb.init(dir=dir, project="adm", entity="lgai", config=config)
+    wandb.init(dir=dir, config=config,
+               entity="lgai", project="adm_"+project, name=exp_name, 
+               )
 
     rank = get_rank_without_mpi_import()
     if rank > 0:
