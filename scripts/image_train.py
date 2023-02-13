@@ -3,6 +3,7 @@ Train a diffusion model on images.
 """
 import yaml
 import argparse
+import wandb 
 
 from guided_diffusion import dist_util, logger
 from guided_diffusion.image_datasets import load_data
@@ -18,9 +19,11 @@ from guided_diffusion.train_util import TrainLoop
 
 def main():
     args, cfg = create_argparser_and_config()
-
+    
     dist_util.setup_dist()
-    logger.configure(dir=args.log_dir, project=args.project, exp=args.exp)
+
+    logger.configure(dir=args.log_dir, 
+                     project=args.project, exp=args.exp, config=cfg)
 
     logger.log("creating model and diffusion...")
     model, diffusion = create_model_and_diffusion(

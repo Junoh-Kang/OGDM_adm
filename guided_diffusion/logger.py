@@ -2,7 +2,8 @@
 Logger copied from OpenAI baselines to avoid extra RL-based dependencies:
 https://github.com/openai/baselines/blob/ea25b9e8b234e6ee1bca43083f8f3cf974143998/baselines/logger.py
 """
-
+import yaml
+import wandb
 import os
 import sys
 import shutil
@@ -471,7 +472,8 @@ def mpi_weighted_mean(comm, local_name2valcount):
 #     if output_formats:
 #         log("Logging to %s" % dir)
 
-def configure(dir='./logs', project='', exp='', format_strs=None, comm=None, log_suffix=""):
+def configure(dir='./logs', project='', exp='', config=None,
+              format_strs=None, comm=None, log_suffix=""):
     """
     If comm is provided, average all numerical stats across that comm
     """
@@ -484,6 +486,11 @@ def configure(dir='./logs', project='', exp='', format_strs=None, comm=None, log
 
     dir = os.path.expanduser(dir)
     os.makedirs(os.path.expanduser(dir), exist_ok=True)
+    
+    with open(osp.join(dir, 'config.yaml'), 'w') as f:
+        yaml.dump(config, f, default_flow_style=False)
+
+    wandb.init(dir=dir, project="adm", entity="lgai", config=config)
 
     rank = get_rank_without_mpi_import()
     if rank > 0:

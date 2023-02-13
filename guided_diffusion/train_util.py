@@ -1,7 +1,8 @@
 import copy
 import functools
 import os
-# import wandb 
+import wandb
+ 
 import blobfile as bf
 import numpy as np
 import torch as th
@@ -71,7 +72,7 @@ class TrainLoop:
         self.global_batch = self.batch_size * dist.get_world_size()
 
         self.sync_cuda = th.cuda.is_available()
-
+        
         self._load_and_sync_parameters()
         self.mp_trainer = MixedPrecisionTrainer(
             model=self.model,
@@ -166,7 +167,7 @@ class TrainLoop:
             self.run_step(batch, cond)
             if self.step % self.log_interval == 0:
                 logger.dumpkvs()
-            if self.step % self.save_interval == 0:
+            if (self.step % self.save_interval == 0) and self.step > 0:
                 self.save()
                 self.sample_and_save(batch.shape)
                 # self.sample_and_cal_fid(num_samples, batch.shape)        
@@ -217,7 +218,9 @@ class TrainLoop:
                 )
 
             loss = (losses["loss"] * weights).mean()
+            # wandb.log({'diffusion loss': loss}, step=self.step)
             log_loss_dict(
+                self.step,
                 self.diffusion, t, {k: v * weights for k, v in losses.items()}
             )
             self.mp_trainer.backward(loss)
@@ -338,10 +341,12 @@ def find_ema_checkpoint(main_checkpoint, step, rate):
     return None
 
 
-def log_loss_dict(diffusion, ts, losses):
+def log_loss_dict(step, diffusion, ts, losses):
     for key, values in losses.items():
         logger.logkv_mean(key, values.mean().item())
+        wandb.log({key: values.mean().item()}, step=step)
         # Log the quantiles (four quartiles, in particular).
         for sub_t, sub_loss in zip(ts.cpu().numpy(), values.detach().cpu().numpy()):
             quartile = int(4 * sub_t / diffusion.num_timesteps)
             logger.logkv_mean(f"{key}_q{quartile}", sub_loss)
+            wandb.log({f"{key}_q{quartile}": sub_loss}, step=step)
