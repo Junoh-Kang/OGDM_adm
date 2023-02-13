@@ -9,13 +9,12 @@ from guided_diffusion import dist_util, logger
 from guided_diffusion.image_datasets import load_data
 from guided_diffusion.resample import create_named_schedule_sampler
 from guided_diffusion.script_util import (
-    model_and_diffusion_defaults,
-    create_model_and_diffusion,
+    diffusion_defaults, model_defaults, discriminator_defaults,
+    create_gaussian_diffusion, create_model, create_discriminator,
     args_to_dict,
     add_dict_to_argparser,
 )
 from guided_diffusion.train_util import TrainLoop
-
 
 def main():
     args, cfg = create_argparser_and_config()
@@ -26,11 +25,25 @@ def main():
                      project=args.project, exp=args.exp, config=cfg)
 
     logger.log("creating model and diffusion...")
-    model, diffusion = create_model_and_diffusion(
-        **args_to_dict(args, model_and_diffusion_defaults().keys())
-    )
     
-    model.to(dist_util.dev())
+    model = create_model(
+        **args_to_dict(args, model_defaults().keys())
+    ).to(dist_util.dev())
+
+    disc = create_discriminator(
+        image_size=args.image_size
+        # **args_to_dict(args, discriminator_defaults().keys())
+    ).to(dist_util.dev())
+
+    diffusion = create_gaussian_diffusion(
+        **args_to_dict(args, diffusion_defaults().keys())
+    )
+
+    # model, diffusion = create_model_and_diffusion(
+    #     **args_to_dict(args, model_and_diffusion_defaults().keys())
+    # )
+    
+    # model.to(dist_util.dev())
     schedule_sampler = create_named_schedule_sampler(args.schedule_sampler, diffusion)
 
     logger.log("creating data loader...")
