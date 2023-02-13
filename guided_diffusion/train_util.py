@@ -169,7 +169,7 @@ class TrainLoop:
             if self.step % self.save_interval == 0:
                 self.save()
                 self.sample_and_save(batch.shape)
-                self.sample_and_cal_fid(num_samples, batch.shape)        
+                # self.sample_and_cal_fid(num_samples, batch.shape)        
                 # Run for a finite amount of time in integration tests.
                 if os.environ.get("DIFFUSION_TRAINING_TEST", "") and self.step > 0:
                     return
@@ -270,30 +270,36 @@ class TrainLoop:
         sample_fn = (
             self.diffusion.p_sample_loop if not use_ddim else self.diffusion.ddim_sample_loop
         )
-        self.model.eval()
+        self.ddp_model.eval()
         logger.log("sampling")
         all_images = []
+        with th.no_grad():
+            while len(all_images) * size[0] < sample_num:                
+                sample = sample_fn(
+                    self.ddp_model, 
+                    (min(size[0], sample_num - len(all_images)*size[0]), *size[1:]),
+                    clip_denoised=True,
+                )
+                sample = ((sample + 1) * 127.5).clamp(0, 255).to(th.uint8)
+                sample = sample.contiguous()
+                gathered_samples = [th.zeros_like(sample) for _ in range(dist.get_world_size())]
+                dist.all_gather(gathered_samples, sample)  # gather not supported with NCCL
+                all_images.extend([sample.cpu() for sample in gathered_samples])
+                logger.log(f"created {len(all_images) * size[0]} samples")
         
-        while len(all_images) * size[0] < sample_num:                
-            sample = sample_fn(
-                self.model, 
-                (min(size[0], sample_num - len(all_images)*size[0]), *size[1:]),
-                clip_denoised=True,
-            )
-            sample = ((sample + 1) * 127.5).clamp(0, 255).to(th.uint8)
-            sample = sample.contiguous()
-            gathered_samples = [th.zeros_like(sample) for _ in range(dist.get_world_size())]
-            dist.all_gather(gathered_samples, sample)  # gather not supported with NCCL
-            all_images.extend([sample.cpu() for sample in gathered_samples])
-            logger.log(f"created {len(all_images) * size[0]} samples")
+        dist.barrier()
+        self.ddp_model.train()
 
         return th.cat(all_images)
     
     def sample_and_save(self, size):
-        sample = self.sample(sample_num=1, size=size)
+        sample = self.sample(sample_num=8, size=size)
         sample = torchvision.utils.make_grid(sample,4).permute(1,2,0).numpy()
-        breakpoint()
-        Image.fromarray(sample).save('./test.png')
+        if dist.get_rank() == 0:
+            filename = f"samples/model_{(self.step+self.resume_step):06d}.png"
+            with bf.BlobFile(bf.join(get_blob_logdir(), filename), "wb") as f:
+                Image.fromarray(sample).save(f)
+        
 
 
 def parse_resume_step_from_filename(filename):
