@@ -11,6 +11,7 @@ from tqdm import tqdm
 
 import numpy as np
 import torch as th
+import torch.nn.functional as F
 
 from .nn import mean_flat
 from .losses import normal_kl, discretized_gaussian_log_likelihood
@@ -742,7 +743,8 @@ class GaussianDiffusion:
         output = th.where((t == 0), decoder_nll, kl)
         return {"output": output, "pred_xstart": out["pred_xstart"]}
 
-    def training_losses(self, model, x_start, t, model_kwargs=None, noise=None):
+    def training_losses(self, model, discriminator, 
+                        x_start, t, model_kwargs=None, noise=None):
         """
         Compute training losses for a single timestep.
 
@@ -807,14 +809,39 @@ class GaussianDiffusion:
                 ModelMeanType.EPSILON: noise,
             }[self.model_mean_type]
             assert model_output.shape == target.shape == x_start.shape
-            terms["mse"] = mean_flat((target - model_output) ** 2)
+            terms["lossDM"] = mean_flat((target - model_output) ** 2)
+            
+            x_start_hat = x_start
+
             if "vb" in terms:
-                terms["loss"] = terms["mse"] + terms["vb"]
+                terms["lossDM"] = terms["lossDM"] + terms["vb"]
             else:
-                terms["loss"] = terms["mse"]
+                terms["lossDM"] = terms["lossDM"]
         else:
             raise NotImplementedError(self.loss_type)
 
+        if True:
+            # Generation loss
+            hinge = True
+            cond = None
+            fake_pred = discriminator(x_start_hat, cond).squeeze()
+            if hinge: #hinge
+                lossG = F.softplus(-fake_pred)
+            else: #not
+                lossG = -torch.log(torch.sigmoid(fake_pred))
+            terms["lossG"] = lossG
+            
+            # Discriminator loss
+            d_real_pred = discriminator(x_start.detach(), cond).squeeze()
+            d_fake_pred = discriminator(x_start_hat, cond).squeeze()
+            if hinge:
+                lossD = F.softplus(-d_real_pred) + F.softplus(d_fake_pred)
+            else:
+                lossD = - torch.log(torch.sigmoid(d_real_pred)) \
+                        - torch.log(1. - torch.sigmoid(d_fake_pred))
+            terms["lossD"] = lossD
+
+        breakpoint()
         return terms
 
     def _prior_bpd(self, x_start):

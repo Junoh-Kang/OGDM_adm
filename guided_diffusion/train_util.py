@@ -206,6 +206,7 @@ class TrainLoop:
             compute_losses = functools.partial(
                 self.diffusion.training_losses,
                 self.ddp_model,
+                self.discriminator,
                 micro,
                 t,
                 model_kwargs=micro_cond,
