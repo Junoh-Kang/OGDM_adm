@@ -24,26 +24,21 @@ def main():
     logger.configure(dir=args.log_dir, 
                      project=args.project, exp=args.exp, config=cfg)
 
-    logger.log("creating model and diffusion...")
+    logger.log("creating model, discriminator, and diffusion...")
     
     model = create_model(
         **args_to_dict(args, model_defaults().keys())
     ).to(dist_util.dev())
 
-    disc = create_discriminator(
+    discriminator = create_discriminator(
         image_size=args.image_size
-        # **args_to_dict(args, discriminator_defaults().keys())
     ).to(dist_util.dev())
-
-    diffusion = create_gaussian_diffusion(
-        **args_to_dict(args, diffusion_defaults().keys())
-    )
-
-    # model, diffusion = create_model_and_diffusion(
-    #     **args_to_dict(args, model_and_diffusion_defaults().keys())
-    # )
     
-    # model.to(dist_util.dev())
+    diffusion_kwargs = args_to_dict(args, diffusion_defaults().keys())
+    diffusion = create_gaussian_diffusion(**diffusion_kwargs)
+    diffusion_kwargs['timestep_respacing'] = "ddim200"
+    sampling_diffusion = create_gaussian_diffusion(**diffusion_kwargs)
+    
     schedule_sampler = create_named_schedule_sampler(args.schedule_sampler, diffusion)
 
     logger.log("creating data loader...")
@@ -53,11 +48,13 @@ def main():
         image_size=args.image_size,
         class_cond=args.class_cond,
     )
-
+   
     logger.log("training...")
     TrainLoop(
         model=model,
+        discriminator=discriminator,
         diffusion=diffusion,
+        sampling_diffusion=sampling_diffusion,
         data=data,
         batch_size=args.batch_size,
         microbatch=args.microbatch,

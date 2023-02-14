@@ -29,7 +29,9 @@ class TrainLoop:
         self,
         *,
         model,
+        discriminator,
         diffusion,
+        sampling_diffusion,
         data,
         batch_size,
         microbatch,
@@ -46,7 +48,10 @@ class TrainLoop:
         lr_anneal_steps=0,
     ):
         self.model = model
+        self.discriminator = discriminator
         self.diffusion = diffusion
+        self.sampling_diffusion = sampling_diffusion
+
         self.data = data
         self.batch_size = batch_size
         self.microbatch = microbatch if microbatch > 0 else batch_size
@@ -265,21 +270,20 @@ class TrainLoop:
                 th.save(self.opt.state_dict(), f)
         dist.barrier()
 
-    def sample(self, sample_num, size):
+    def sample(self, sample_fn, model, sample_num, size):
         """
         return (sample_num, c, h, w) tensor
         """
-        use_ddim = False
-        sample_fn = (
-            self.diffusion.p_sample_loop if not use_ddim else self.diffusion.ddim_sample_loop
-        )
-        self.ddp_model.eval()
+        import time
+        start = time.time()
+
+        model.eval()
         logger.log("sampling")
         all_images = []
         with th.no_grad():
             while len(all_images) * size[0] < sample_num:                
                 sample = sample_fn(
-                    self.ddp_model, 
+                    model, 
                     (min(size[0], sample_num - len(all_images)*size[0]), *size[1:]),
                     clip_denoised=True,
                 )
@@ -288,22 +292,38 @@ class TrainLoop:
                 gathered_samples = [th.zeros_like(sample) for _ in range(dist.get_world_size())]
                 dist.all_gather(gathered_samples, sample)  # gather not supported with NCCL
                 all_images.extend([sample.cpu() for sample in gathered_samples])
-                logger.log(f"created {len(all_images) * size[0]} samples")
-        
+                logger.log(f"created {len(all_images) * size[0]} samples...{time.time()-start:.3}s")
+                
         dist.barrier()
-        self.ddp_model.train()
-
+        model.train()
         return th.cat(all_images)
     
     def sample_and_save(self, size):
-        sample = self.sample(sample_num=8, size=size)
-        sample = torchvision.utils.make_grid(sample,4).permute(1,2,0).numpy()
-        if dist.get_rank() == 0:
-            filename = f"samples/model_{(self.step+self.resume_step):06d}.png"
-            with bf.BlobFile(bf.join(get_blob_logdir(), filename), "wb") as f:
-                Image.fromarray(sample).save(f)
-        
 
+        # sampler
+        ddpm_sample_fn = self.diffusion.p_sample_loop
+        ddim_sample_fn = self.sampling_diffusion.ddim_sample_loop
+
+        # sample
+        ddpm_model_sample = self.sample(sample_fn=ddpm_sample_fn, model=self.ddp_model, 
+                                        sample_num=1, size=size)
+        ddim_model_sample = self.sample(sample_fn=ddim_sample_fn, model=self.ddp_model, 
+                                        sample_num=1, size=size)
+        
+        # save
+        ddpm_model_sample = torchvision.utils.make_grid(ddpm_model_sample, 4).permute(1,2,0).numpy()
+        ddim_model_sample = torchvision.utils.make_grid(ddim_model_sample, 4).permute(1,2,0).numpy()
+        if dist.get_rank() == 0:
+            filename = f"samples/model_ddpm_{(self.step+self.resume_step):06d}.png"
+            with bf.BlobFile(bf.join(get_blob_logdir(), filename), "wb") as f:
+                Image.fromarray(ddpm_model_sample).save(f)
+
+            filename = f"samples/model_ddim200_{(self.step+self.resume_step):06d}.png"
+            with bf.BlobFile(bf.join(get_blob_logdir(), filename), "wb") as f:
+                Image.fromarray(ddim_model_sample).save(f)
+    
+    def sample_and_fid(self, size):
+        return
 
 def parse_resume_step_from_filename(filename):
     """
