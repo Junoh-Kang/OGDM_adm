@@ -210,20 +210,20 @@ class TrainLoop:
                 micro,
                 t,
                 model_kwargs=micro_cond,
-            )
+            )  
 
             if last_batch or not self.use_ddp:
                 losses = compute_losses()
             else:
                 with self.ddp_model.no_sync():
                     losses = compute_losses()
-
+            
             if isinstance(self.schedule_sampler, LossAwareSampler):
                 self.schedule_sampler.update_with_local_losses(
-                    t, losses["loss"].detach()
+                    t, losses["lossDM"].detach()
                 )
 
-            loss = (losses["loss"] * weights).mean()
+            loss = (losses["lossDM"] * weights).mean()
             # wandb.log({'diffusion loss': loss}, step=self.step)
             log_loss_dict(
                 self.step,
