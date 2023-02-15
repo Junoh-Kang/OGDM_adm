@@ -111,6 +111,14 @@ class TrainLoop:
                 bucket_cap_mb=128,
                 find_unused_parameters=False,
             )
+            self.ddp_discriminator = DDP(
+                self.discriminator,
+                device_ids=[dist_util.dev()],
+                output_device=dist_util.dev(),
+                broadcast_buffers=False,
+                bucket_cap_mb=128
+                find_unused_parameters=False,
+            )
         else:
             if dist.get_world_size() > 1:
                 logger.warn(
@@ -119,6 +127,7 @@ class TrainLoop:
                 )
             self.use_ddp = False
             self.ddp_model = self.model
+            self.ddp_discriminator = self.discriminator
 
     def _load_and_sync_parameters(self):
         resume_checkpoint = find_resume_checkpoint() or self.resume_checkpoint
@@ -206,7 +215,7 @@ class TrainLoop:
             compute_losses = functools.partial(
                 self.diffusion.training_losses,
                 self.ddp_model,
-                self.discriminator,
+                self.ddp_discriminator,
                 micro,
                 t,
                 model_kwargs=micro_cond,

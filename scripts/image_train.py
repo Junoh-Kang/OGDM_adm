@@ -30,9 +30,12 @@ def main():
         **args_to_dict(args, model_defaults().keys())
     ).to(dist_util.dev())
 
-    discriminator = create_discriminator(
-        image_size=args.image_size
-    ).to(dist_util.dev())
+    if args.use_discriminator:
+        discriminator = create_discriminator(
+            image_size = args.image_size
+        ).to(dist_util.dev())
+    else:
+        discriminator = None
     
     diffusion_kwargs = args_to_dict(args, diffusion_defaults().keys())
     diffusion = create_gaussian_diffusion(**diffusion_kwargs)
