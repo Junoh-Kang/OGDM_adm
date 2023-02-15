@@ -111,14 +111,17 @@ class TrainLoop:
                 bucket_cap_mb=128,
                 find_unused_parameters=False,
             )
-            self.ddp_discriminator = DDP(
-                self.discriminator,
-                device_ids=[dist_util.dev()],
-                output_device=dist_util.dev(),
-                broadcast_buffers=False,
-                bucket_cap_mb=128
-                find_unused_parameters=False,
-            )
+            if self.discriminator is not None:
+                self.ddp_discriminator = DDP(
+                    self.discriminator,
+                    device_ids=[dist_util.dev()],
+                    output_device=dist_util.dev(),
+                    broadcast_buffers=False,
+                    bucket_cap_mb=128,
+                    find_unused_parameters=False,
+                )
+            else:
+                self.ddp_discriminator = None
         else:
             if dist.get_world_size() > 1:
                 logger.warn(

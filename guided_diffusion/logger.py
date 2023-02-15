@@ -15,6 +15,7 @@ import tempfile
 import warnings
 from collections import defaultdict
 from contextlib import contextmanager
+import torch.distributed as dist
 
 DEBUG = 10
 INFO = 20
@@ -491,9 +492,10 @@ def configure(dir='./logs', project='', exp='', config=None,
     with open(osp.join(dir, 'config.yaml'), 'w') as f:
         yaml.dump(config, f, default_flow_style=False)
 
-    wandb.init(dir=dir, config=config,
-               entity="lgai", project="adm_"+project, name=exp_name, 
-               )
+    if dist.get_rank() == 0: 
+        wandb.init(dir=dir, config=config,
+                entity="lgai", project="adm_"+project, name=exp_name, 
+                )
 
     rank = get_rank_without_mpi_import()
     if rank > 0:
