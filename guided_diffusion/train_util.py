@@ -39,7 +39,6 @@ class TrainLoop:
         lr_disc,
         use_hinge,
         lossG_weight,
-        lossD_weight,
         grad_weight,
         ema_rate,
         log_interval,
@@ -64,7 +63,6 @@ class TrainLoop:
         self.lr_disc = lr_disc
         self.use_hinge = use_hinge
         self.lossG_weight = lossG_weight
-        self.lossD_weight = lossD_weight
         self.grad_weight = grad_weight
 
         self.ema_rate = (
@@ -262,10 +260,9 @@ class TrainLoop:
                 )
             
             if self.discriminator:
-                lossG = (losses["lossDM"] * weights + \
+                lossG = (losses["lossDM"] * weights + 
                          self.lossG_weight * losses["lossG"])
-                lossD = self.lossD_weight * \
-                        (losses["lossD"] + 
+                lossD = (losses["lossD"] + 
                          self.grad_weight / 2 * losses["grad_penalty"])
                 losses["generation"] = lossG
                 losses["dicriminator"] = lossG
