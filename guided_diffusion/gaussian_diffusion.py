@@ -812,8 +812,6 @@ class GaussianDiffusion:
             assert model_output.shape == target.shape == x_start.shape
             terms["lossDM"] = mean_flat((target - model_output) ** 2)
             
-            x_start_hat = x_start
-
             if "vb" in terms:
                 terms["lossDM"] = terms["lossDM"] + terms["vb"]
             else:
@@ -822,6 +820,15 @@ class GaussianDiffusion:
             raise NotImplementedError(self.loss_type)
 
         if discriminator is not None:
+            x_start_hat = {
+                ModelMeanType.PREVIOUS_X: 
+                    self._predict_xstart_from_xprev(x_t, t, model_output),
+                ModelMeanType.START_X: 
+                    model_output,
+                ModelMeanType.EPSILON: 
+                    self._predict_xstart_from_eps(x_t, t, model_output) 
+            }[self.model_mean_type]
+            
             # Generation loss
             cond = None
             fake_pred = discriminator(x_start_hat, cond).squeeze()
