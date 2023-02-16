@@ -743,8 +743,8 @@ class GaussianDiffusion:
         output = th.where((t == 0), decoder_nll, kl)
         return {"output": output, "pred_xstart": out["pred_xstart"]}
 
-    def training_losses(self, model, discriminator, 
-                        x_start, t, model_kwargs=None, noise=None):
+    def training_losses(self, model, discriminator,
+                        x_start, t, model_kwargs=None, noise=None, use_hinge=True):
         """
         Compute training losses for a single timestep.
 
@@ -823,10 +823,9 @@ class GaussianDiffusion:
 
         if discriminator is not None:
             # Generation loss
-            hinge = True
             cond = None
             fake_pred = discriminator(x_start_hat, cond).squeeze()
-            if hinge: #hinge
+            if use_hinge: #hinge
                 lossG = F.softplus(-fake_pred)
             else: #not
                 lossG = -th.log(th.sigmoid(fake_pred))
@@ -835,21 +834,16 @@ class GaussianDiffusion:
             # Discriminator loss
             d_real_pred = discriminator(x_start, cond).squeeze()
             d_fake_pred = discriminator(x_start_hat, cond).squeeze()
-            if hinge:
+            if use_hinge:
                 lossD = F.softplus(-d_real_pred) + F.softplus(d_fake_pred)
             else:
                 lossD = - th.log(th.sigmoid(d_real_pred)) \
                         - th.log(1. - th.sigmoid(d_fake_pred))
             terms["lossD"] = lossD
-            # if True: #gan_config.r1_gamma > 0.0 and hinge:
-                # if (batch_idx+1) % self.gan_config.reg_frequency == 0 and self.training:
             grad_real = th.autograd.grad(outputs=d_real_pred.sum(), 
                                          inputs=x_start, create_graph=True)[0]
             grad_penalty = (grad_real.view(grad_real.size(0), -1).norm(2, dim=1) ** 2)
             terms["grad_penalty"] = grad_penalty
-            # grad_penalty = self.gan_config.r1_gamma / 2 * grad_penalty
-            # lossD += grad_penalty                            
-            # loss = lossD * self.gan_config.l_weight
 
         return terms
 

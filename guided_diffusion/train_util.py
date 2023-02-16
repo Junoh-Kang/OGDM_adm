@@ -37,6 +37,10 @@ class TrainLoop:
         microbatch,
         lr_model,
         lr_disc,
+        use_hinge,
+        lossG_weight,
+        lossD_weight,
+        grad_weight,
         ema_rate,
         log_interval,
         save_interval,
@@ -58,6 +62,11 @@ class TrainLoop:
         self.microbatch = microbatch if microbatch > 0 else batch_size
         self.lr_model = lr_model
         self.lr_disc = lr_disc
+        self.use_hinge = use_hinge
+        self.lossG_weight = lossG_weight
+        self.lossD_weight = lossD_weight
+        self.grad_weight = grad_weight
+
         self.ema_rate = (
             [ema_rate]
             if isinstance(ema_rate, float)
@@ -238,6 +247,7 @@ class TrainLoop:
                 micro,
                 t,
                 model_kwargs=micro_cond,
+                use_hinge=self.use_hinge
             )  
 
             if last_batch or not self.use_ddp:
@@ -252,10 +262,16 @@ class TrainLoop:
                 )
             
             if self.discriminator:
-                lossG = (losses["lossDM"] * weights + losses["lossG"]).mean()
-                lossD = (losses["lossD"] + losses["grad_penalty"]).mean()
-                self.mp_trainer.backward(lossG)
-                self.mp_trainer_disc.backward(lossD)
+                lossG = (losses["lossDM"] * weights + \
+                         self.lossG_weight * losses["lossG"])
+                lossD = self.lossD_weight * \
+                        (losses["lossD"] + 
+                         self.grad_weight / 2 * losses["grad_penalty"])
+                losses["generation"] = lossG
+                losses["dicriminator"] = lossG
+                
+                self.mp_trainer.backward(lossG.mean())
+                self.mp_trainer_disc.backward(lossD.mean())
             else:
                 lossG = (losses["lossDM"] * weights).mean()
                 self.mp_trainer.backward(lossG)
@@ -356,10 +372,10 @@ class TrainLoop:
         ddim_sample_fn = self.sampling_diffusion.ddim_sample_loop
         # sample
         ddpm_model_sample = self.sample(sample_fn=ddpm_sample_fn, model=self.ddp_model, 
-                                        sample_num=1, size=size)
+                                        sample_num=8, size=size)
         ddpm_model_sample = torchvision.utils.make_grid(ddpm_model_sample, 4).permute(1,2,0).numpy()
         ddim_model_sample = self.sample(sample_fn=ddim_sample_fn, model=self.ddp_model, 
-                                        sample_num=1, size=size)
+                                        sample_num=8, size=size)
         ddim_model_sample = torchvision.utils.make_grid(ddim_model_sample, 4).permute(1,2,0).numpy()
 
         # save        

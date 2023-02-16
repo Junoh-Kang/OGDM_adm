@@ -35,11 +35,11 @@ def main():
 
     if args.use_discriminator:
         discriminator = create_discriminator(
-            image_size = args.image_size
+            image_size=args.image_size,
         ).to(dist_util.dev())
     else:
         discriminator = None
-    
+        
     diffusion_kwargs = args_to_dict(args, diffusion_defaults().keys())
     diffusion = create_gaussian_diffusion(**diffusion_kwargs)
     diffusion_kwargs['timestep_respacing'] = "ddim200"
@@ -66,6 +66,10 @@ def main():
         microbatch=args.microbatch,
         lr_model=args.lr_model,
         lr_disc=args.lr_disc,
+        use_hinge=args.use_hinge,
+        lossG_weight=args.lossG_weight,
+        lossD_weight=args.lossD_weight,
+        grad_weight=args.grad_weight,
         ema_rate=args.ema_rate,
         log_interval=args.log_interval,
         save_interval=args.save_interval,

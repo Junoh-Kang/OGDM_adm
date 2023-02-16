@@ -161,7 +161,7 @@ def create_model(
 
 def create_discriminator(
     c_dim=0,
-    image_size=64,          
+    image_size=64,         
     img_channels=3,
     architecture='resnet',
     channel_base=32768,
