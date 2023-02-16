@@ -354,25 +354,27 @@ class TrainLoop:
         # sampler
         ddpm_sample_fn = self.diffusion.p_sample_loop
         ddim_sample_fn = self.sampling_diffusion.ddim_sample_loop
-
         # sample
         ddpm_model_sample = self.sample(sample_fn=ddpm_sample_fn, model=self.ddp_model, 
                                         sample_num=1, size=size)
+        ddpm_model_sample = torchvision.utils.make_grid(ddpm_model_sample, 4).permute(1,2,0).numpy()
         ddim_model_sample = self.sample(sample_fn=ddim_sample_fn, model=self.ddp_model, 
                                         sample_num=1, size=size)
-        
-        # save
-        ddpm_model_sample = torchvision.utils.make_grid(ddpm_model_sample, 4).permute(1,2,0).numpy()
         ddim_model_sample = torchvision.utils.make_grid(ddim_model_sample, 4).permute(1,2,0).numpy()
+
+        # save        
         if dist.get_rank() == 0:
+            # ddpm sampled
             filename = f"samples/model_ddpm_{(self.step+self.resume_step):06d}.png"
             with bf.BlobFile(bf.join(get_blob_logdir(), filename), "wb") as f:
                 Image.fromarray(ddpm_model_sample).save(f)
-            
+            wandb.log({"ddpm_model": wandb.Image(ddpm_model_sample)})
+            # ddim sampled
             filename = f"samples/model_ddim200_{(self.step+self.resume_step):06d}.png"
             with bf.BlobFile(bf.join(get_blob_logdir(), filename), "wb") as f:
                 Image.fromarray(ddim_model_sample).save(f)
-    
+            wandb.log({"ddim_model": wandb.Image(ddim_model_sample)})
+            
     def sample_and_fid(self, size):
         return
 
