@@ -88,13 +88,13 @@ class TrainLoop:
         self.sync_cuda = th.cuda.is_available()
         
         self._load_and_sync_parameters()
-        self.mp_trainer = MixedPrecisionTrainer(
+        self.mp_trainer_model = MixedPrecisionTrainer(
             model=self.model,
             use_fp16=self.use_fp16,
             fp16_scale_growth=fp16_scale_growth,
         )
         self.opt_model = AdamW(
-            self.mp_trainer.master_params, lr=self.lr_model, weight_decay=self.weight_decay
+            self.mp_trainer_model.master_params, lr=self.lr_model, weight_decay=self.weight_decay
         )
 
         if self.discriminator:
@@ -115,7 +115,7 @@ class TrainLoop:
             ]
         else:
             self.ema_params = [
-                copy.deepcopy(self.mp_trainer.master_params)
+                copy.deepcopy(self.mp_trainer_model.master_params)
                 for _ in range(len(self.ema_rate))
             ]
 
@@ -166,7 +166,7 @@ class TrainLoop:
         dist_util.sync_params(self.model.parameters())
 
     def _load_ema_parameters(self, rate):
-        ema_params = copy.deepcopy(self.mp_trainer.master_params)
+        ema_params = copy.deepcopy(self.mp_trainer_model.master_params)
 
         main_checkpoint = find_resume_checkpoint() or self.resume_checkpoint
         ema_checkpoint = find_ema_checkpoint(main_checkpoint, self.resume_step, rate)
@@ -176,7 +176,7 @@ class TrainLoop:
                 state_dict = dist_util.load_state_dict(
                     ema_checkpoint, map_location=dist_util.dev()
                 )
-                ema_params = self.mp_trainer.state_dict_to_master_params(state_dict)
+                ema_params = self.mp_trainer_model.state_dict_to_master_params(state_dict)
 
         dist_util.sync_params(ema_params)
         return ema_params
@@ -217,7 +217,7 @@ class TrainLoop:
 
     def run_step(self, batch, cond):
         self.forward_backward(batch, cond)
-        took_step = self.mp_trainer.optimize(self.opt_model) and \
+        took_step = self.mp_trainer_model.optimize(self.opt_model) and \
                     self.mp_trainer_disc.optimize(self.opt_disc)
         if took_step:
             self._update_ema()
@@ -226,7 +226,7 @@ class TrainLoop:
 
     def forward_backward(self, batch, cond):
 
-        self.mp_trainer.zero_grad()
+        self.mp_trainer_model.zero_grad()
         self.mp_trainer_disc.zero_grad()
 
         for i in range(0, batch.shape[0], self.microbatch):
@@ -265,19 +265,18 @@ class TrainLoop:
                 lossD = (losses["lossD"] + 
                          self.grad_weight / 2 * losses["grad_penalty"])
                 losses["generation"] = lossG
-                losses["dicriminator"] = lossG
-                
-                self.mp_trainer.backward(lossG.mean())
-                self.mp_trainer_disc.backward(lossD.mean())
+                losses["dicriminator"] = lossD
+                breakpoint()
+                self.mp_trainer_model.backward(lossG.mean(), retain_graph=True)
+                self.mp_trainer_disc.backward(lossD.mean(), retain_graph=False)
             else:
-                lossG = (losses["lossDM"] * weights).mean()
-                self.mp_trainer.backward(lossG)
+                lossG = (losses["lossDM"] * weights)
+                self.mp_trainer_model.backward(lossG.mean())
             
             log_loss_dict(
                 self.step,
                 self.diffusion, t, {k: v * weights for k, v in losses.items()}
             )
-            # breakpoint()
 
     def _update_ema(self):
         for rate, params in zip(self.ema_rate, self.ema_params):
@@ -298,7 +297,7 @@ class TrainLoop:
 
     def save(self):
         def save_checkpoint(rate, params):
-            state_dict = self.mp_trainer.master_params_to_state_dict(params)
+            state_dict = self.mp_trainer_model.master_params_to_state_dict(params)
             if dist.get_rank() == 0:
                 logger.log(f"saving model {rate}...")
                 if not rate:
@@ -308,7 +307,7 @@ class TrainLoop:
                 with bf.BlobFile(bf.join(get_blob_logdir(), filename), "wb") as f:
                     th.save(state_dict, f)
 
-        save_checkpoint(0, self.mp_trainer.master_params)
+        save_checkpoint(0, self.mp_trainer_model.master_params)
         for rate, params in zip(self.ema_rate, self.ema_params):
             save_checkpoint(rate, params)
 
