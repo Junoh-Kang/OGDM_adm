@@ -23,8 +23,11 @@ def main():
 
     logger.configure(dir=args.log_dir, 
                      project=args.project, exp=args.exp, config=cfg)
-
-    logger.log("creating model, discriminator, and diffusion...")
+    
+    if args.use_discriminator:
+        logger.log("creating model, discriminator and diffusion...")
+    else:
+        logger.log("creating model and diffusion...")
     
     model = create_model(
         **args_to_dict(args, model_defaults().keys())
@@ -61,7 +64,8 @@ def main():
         data=data,
         batch_size=args.batch_size,
         microbatch=args.microbatch,
-        lr=args.lr,
+        lr_model=args.lr_model,
+        lr_disc=args.lr_disc,
         ema_rate=args.ema_rate,
         log_interval=args.log_interval,
         save_interval=args.save_interval,

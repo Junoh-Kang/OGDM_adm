@@ -197,7 +197,7 @@ def add_dict_to_argparser(parser, default_dict):
             v_type = str
         elif isinstance(v, bool):
             v_type = str2bool
-        if k in ['lr',]:
+        if k in ['lr_model', 'lr_disc']:
             v_type = float
         parser.add_argument(f"--{k}", default=v, type=v_type)
 

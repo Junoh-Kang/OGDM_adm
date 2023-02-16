@@ -35,7 +35,8 @@ class TrainLoop:
         data,
         batch_size,
         microbatch,
-        lr,
+        lr_model,
+        lr_disc,
         ema_rate,
         log_interval,
         save_interval,
@@ -55,7 +56,8 @@ class TrainLoop:
         self.data = data
         self.batch_size = batch_size
         self.microbatch = microbatch if microbatch > 0 else batch_size
-        self.lr = lr
+        self.lr_model = lr_model
+        self.lr_disc = lr_disc
         self.ema_rate = (
             [ema_rate]
             if isinstance(ema_rate, float)
@@ -84,10 +86,19 @@ class TrainLoop:
             use_fp16=self.use_fp16,
             fp16_scale_growth=fp16_scale_growth,
         )
-
-        self.opt = AdamW(
-            self.mp_trainer.master_params, lr=self.lr, weight_decay=self.weight_decay
+        self.opt_model = AdamW(
+            self.mp_trainer.master_params, lr=self.lr_model, weight_decay=self.weight_decay
         )
+
+        if self.discriminator:
+            self.mp_trainer_disc = MixedPrecisionTrainer(
+                model=self.discriminator,
+                use_fp16=self.use_fp16,
+                fp16_scale_growth=fp16_scale_growth,
+            )
+            self.opt_disc = AdamW(
+                self.mp_trainer_disc.master_params, lr=self.lr_disc, weight_decay=self.weight_decay
+            )
         if self.resume_step:
             self._load_optimizer_state()
             # Model was resumed, either due to a restart or a checkpoint
@@ -173,7 +184,7 @@ class TrainLoop:
             state_dict = dist_util.load_state_dict(
                 opt_checkpoint, map_location=dist_util.dev()
             )
-            self.opt.load_state_dict(state_dict)
+            self.opt_model.load_state_dict(state_dict)
 
     def run_loop(self):
         while (
@@ -195,17 +206,22 @@ class TrainLoop:
         # Save the last checkpoint if it wasn't already saved.
         if (self.step - 1) % self.save_interval != 0:
             self.save()
+            self.sample_and_save(batch.shape)
 
     def run_step(self, batch, cond):
         self.forward_backward(batch, cond)
-        took_step = self.mp_trainer.optimize(self.opt)
+        took_step = self.mp_trainer.optimize(self.opt_model) and \
+                    self.mp_trainer_disc.optimize(self.opt_disc)
         if took_step:
             self._update_ema()
         self._anneal_lr()
         self.log_step()
 
     def forward_backward(self, batch, cond):
+
         self.mp_trainer.zero_grad()
+        self.mp_trainer_disc.zero_grad()
+
         for i in range(0, batch.shape[0], self.microbatch):
             micro = batch[i : i + self.microbatch].to(dist_util.dev())
             micro_cond = {
@@ -234,14 +250,21 @@ class TrainLoop:
                 self.schedule_sampler.update_with_local_losses(
                     t, losses["lossDM"].detach()
                 )
-
-            loss = (losses["lossDM"] * weights).mean()
-            # wandb.log({'diffusion loss': loss}, step=self.step)
+            
+            if self.discriminator:
+                lossG = (losses["lossDM"] * weights + losses["lossG"]).mean()
+                lossD = (losses["lossD"] + losses["grad_penalty"]).mean()
+                self.mp_trainer.backward(lossG)
+                self.mp_trainer_disc.backward(lossD)
+            else:
+                lossG = (losses["lossDM"] * weights).mean()
+                self.mp_trainer.backward(lossG)
+            
             log_loss_dict(
                 self.step,
                 self.diffusion, t, {k: v * weights for k, v in losses.items()}
             )
-            self.mp_trainer.backward(loss)
+            # breakpoint()
 
     def _update_ema(self):
         for rate, params in zip(self.ema_rate, self.ema_params):
@@ -251,9 +274,10 @@ class TrainLoop:
         if not self.lr_anneal_steps:
             return
         frac_done = (self.step + self.resume_step) / self.lr_anneal_steps
-        lr = self.lr * (1 - frac_done)
-        for param_group in self.opt.param_groups:
-            param_group["lr"] = lr
+        for param_group in self.opt_model.param_groups:
+            param_group["lr"] = self.lr_model * (1 - frac_done)
+        for param_group in self.opt_disc.param_groups:
+            param_group["lr"] = self.lr_disc * (1 - frac_done)
 
     def log_step(self):
         logger.logkv("step", self.step + self.resume_step)
@@ -265,9 +289,9 @@ class TrainLoop:
             if dist.get_rank() == 0:
                 logger.log(f"saving model {rate}...")
                 if not rate:
-                    filename = f"model/{(self.step+self.resume_step):06d}.pt"
+                    filename = f"model/model_{(self.step+self.resume_step):06d}.pt"
                 else:
-                    filename = f"ema_{rate}/{(self.step+self.resume_step):06d}.pt"
+                    filename = f"model/ema_{rate}_{(self.step+self.resume_step):06d}.pt"
                 with bf.BlobFile(bf.join(get_blob_logdir(), filename), "wb") as f:
                     th.save(state_dict, f)
 
@@ -276,11 +300,25 @@ class TrainLoop:
             save_checkpoint(rate, params)
 
         if dist.get_rank() == 0:
+            # save model opt
             with bf.BlobFile(
-                bf.join(get_blob_logdir(), f"opt/{(self.step+self.resume_step):06d}.pt"),
+                bf.join(get_blob_logdir(), f"model/opt_{(self.step+self.resume_step):06d}.pt"),
                 "wb",
             ) as f:
-                th.save(self.opt.state_dict(), f)
+                th.save(self.opt_model.state_dict(), f)
+            if self.discriminator:
+                # save disc 
+                with bf.BlobFile(
+                    bf.join(get_blob_logdir(), f"disc/disc_{(self.step+self.resume_step):06d}.pt"), 
+                    "wb",
+                ) as f:
+                    th.save(self.discriminator.state_dict(), f)
+                #save disc opt
+                with bf.BlobFile(
+                    bf.join(get_blob_logdir(), f"disc/opt_{(self.step+self.resume_step):06d}.pt"),
+                    "wb",
+                ) as f:
+                    th.save(self.opt_disc.state_dict(), f)
         dist.barrier()
 
     def sample(self, sample_fn, model, sample_num, size):
@@ -330,7 +368,7 @@ class TrainLoop:
             filename = f"samples/model_ddpm_{(self.step+self.resume_step):06d}.png"
             with bf.BlobFile(bf.join(get_blob_logdir(), filename), "wb") as f:
                 Image.fromarray(ddpm_model_sample).save(f)
-
+            
             filename = f"samples/model_ddim200_{(self.step+self.resume_step):06d}.png"
             with bf.BlobFile(bf.join(get_blob_logdir(), filename), "wb") as f:
                 Image.fromarray(ddim_model_sample).save(f)
