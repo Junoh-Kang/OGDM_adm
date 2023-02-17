@@ -478,12 +478,8 @@ def configure(dir='./logs', project='', exp='', config=None,
     """
     If comm is provided, average all numerical stats across that comm
     """
-    exp_name = exp + datetime.datetime.now().strftime("_%Y-%m-%d-%H-%M-%S-%f")
-    dir = osp.join(
-        dir,
-        project,
-        exp_name,
-    )
+    exp_name = datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S-%f_") + exp
+    dir = osp.join(dir, project, exp_name,)
     assert isinstance(dir, str)
 
     dir = os.path.expanduser(dir)
