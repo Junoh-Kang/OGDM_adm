@@ -217,8 +217,9 @@ class TrainLoop:
 
     def run_step(self, batch, cond):
         self.forward_backward(batch, cond)
-        took_step = self.mp_trainer_model.optimize(self.opt_model) and \
-                    self.mp_trainer_disc.optimize(self.opt_disc)
+        took_step = self.mp_trainer_model.optimize(self.opt_model)
+        if self.ddp_discriminator:
+            took_step = took_step and self.mp_trainer_disc.optimize(self.opt_disc)
         if took_step:
             self._update_ema()
         self._anneal_lr()
@@ -227,7 +228,8 @@ class TrainLoop:
     def forward_backward(self, batch, cond):
 
         self.mp_trainer_model.zero_grad()
-        self.mp_trainer_disc.zero_grad()
+        if self.ddp_discriminator:
+            self.mp_trainer_disc.zero_grad()
 
         for i in range(0, batch.shape[0], self.microbatch):
             micro = batch[i : i + self.microbatch].to(dist_util.dev())
@@ -238,8 +240,9 @@ class TrainLoop:
             last_batch = (i + self.microbatch) >= batch.shape[0]
             t, weights = self.schedule_sampler.sample(micro.shape[0], dist_util.dev())
 
-            compute_losses = functools.partial(
-                self.diffusion.training_losses,
+            # compute Generation loss and backward
+            compute_losses_G = functools.partial(
+                self.diffusion.training_losses_G,
                 self.ddp_model,
                 self.ddp_discriminator,
                 micro,
@@ -247,31 +250,43 @@ class TrainLoop:
                 model_kwargs=micro_cond,
                 use_hinge=self.use_hinge
             )  
-
             if last_batch or not self.use_ddp:
-                losses = compute_losses()
+                losses = compute_losses_G()
             else:
                 with self.ddp_model.no_sync():
-                    losses = compute_losses()
-            
+                    losses = compute_losses_G()
             if isinstance(self.schedule_sampler, LossAwareSampler):
                 self.schedule_sampler.update_with_local_losses(
                     t, losses["lossDM"].detach()
                 )
-            
-            if self.discriminator:
-                lossG = (losses["lossDM"] * weights + 
-                         self.lossG_weight * losses["lossG"])
-                lossD = (losses["lossD"] + 
-                         self.grad_weight / 2 * losses["grad_penalty"])
-                losses["generation"] = lossG
-                losses["dicriminator"] = lossD
-                breakpoint()
-                self.mp_trainer_model.backward(lossG.mean(), retain_graph=True)
-                self.mp_trainer_disc.backward(lossD.mean(), retain_graph=False)
+            if self.ddp_discriminator:
+                lossG = losses["lossDM"] * weights + self.lossG_weight * losses["lossG"]
+                losses["Generation"] = lossG
             else:
-                lossG = (losses["lossDM"] * weights)
-                self.mp_trainer_model.backward(lossG.mean())
+                lossG = losses["lossDM"] * weights
+            
+            self.mp_trainer_model.backward(lossG.mean())
+
+            # compute Discrimination loss and backward
+            if self.ddp_discriminator:
+                compute_losses_D = functools.partial(
+                    self.diffusion.training_losses_D,
+                    self.ddp_model,
+                    self.ddp_discriminator,
+                    micro,
+                    t,
+                    model_kwargs=micro_cond,
+                    use_hinge=self.use_hinge
+                )
+                if last_batch or not self.use_ddp:
+                    losses = compute_losses_D()
+                else:
+                    with self.ddp_model.no_sync() and self.ddp_discriminator.no_sync():
+                        losses = compute_losses_D()  
+                
+                lossD = losses["lossD"] + self.grad_weight / 2 * losses["grad_penalty"]
+                losses["Discrimination"] = lossD
+                self.mp_trainer_disc.backward(lossD.mean())
             
             log_loss_dict(
                 self.step,
@@ -280,7 +295,7 @@ class TrainLoop:
 
     def _update_ema(self):
         for rate, params in zip(self.ema_rate, self.ema_params):
-            update_ema(params, self.mp_trainer.master_params, rate=rate)
+            update_ema(params, self.mp_trainer_model.master_params, rate=rate)
 
     def _anneal_lr(self):
         if not self.lr_anneal_steps:
@@ -313,19 +328,22 @@ class TrainLoop:
 
         if dist.get_rank() == 0:
             # save model opt
+            logger.log(f"saving model opt...")
             with bf.BlobFile(
                 bf.join(get_blob_logdir(), f"model/opt_{(self.step+self.resume_step):06d}.pt"),
                 "wb",
             ) as f:
                 th.save(self.opt_model.state_dict(), f)
-            if self.discriminator:
+            if self.ddp_discriminator:
                 # save disc 
+                logger.log(f"saving discriminator...")
                 with bf.BlobFile(
                     bf.join(get_blob_logdir(), f"disc/disc_{(self.step+self.resume_step):06d}.pt"), 
                     "wb",
                 ) as f:
                     th.save(self.discriminator.state_dict(), f)
                 #save disc opt
+                logger.log(f"saving discriminator opt...")
                 with bf.BlobFile(
                     bf.join(get_blob_logdir(), f"disc/opt_{(self.step+self.resume_step):06d}.pt"),
                     "wb",

@@ -742,12 +742,10 @@ class GaussianDiffusion:
         # otherwise return KL(q(x_{t-1}|x_t,x_0) || p(x_{t-1}|x_t))
         output = th.where((t == 0), decoder_nll, kl)
         return {"output": output, "pred_xstart": out["pred_xstart"]}
-
-    def training_losses(self, model, discriminator,
-                        x_start, t, model_kwargs=None, noise=None, use_hinge=True):
+    
+    def training_losses(self, model, x_start, t, model_kwargs=None, noise=None):
         """
         Compute training losses for a single timestep.
-
         :param model: the model to evaluate loss on.
         :param x_start: the [N x C x ...] tensor of inputs.
         :param t: a batch of timestep indices.
@@ -757,7 +755,6 @@ class GaussianDiffusion:
         :return: a dict with the key "loss" containing a tensor of shape [N].
                  Some mean or variance settings may also have other keys.
         """
-        x_start.requires_grad = True
         if model_kwargs is None:
             model_kwargs = {}
         if noise is None:
@@ -810,18 +807,64 @@ class GaussianDiffusion:
                 ModelMeanType.EPSILON: noise,
             }[self.model_mean_type]
             assert model_output.shape == target.shape == x_start.shape
-            terms["lossDM"] = mean_flat((target - model_output) ** 2)
-            
-            x_start_hat = x_start
-
+            terms["mse"] = mean_flat((target - model_output) ** 2)
             if "vb" in terms:
-                terms["lossDM"] = terms["lossDM"] + terms["vb"]
+                terms["loss"] = terms["mse"] + terms["vb"]
             else:
-                terms["lossDM"] = terms["lossDM"]
+                terms["loss"] = terms["mse"]
         else:
             raise NotImplementedError(self.loss_type)
 
-        if discriminator is not None:
+        return terms
+    
+    def training_losses_GD(self, model, discriminator,
+                           x_start, t, model_kwargs=None, noise=None, use_hinge=True):
+        """
+        Compute training losses for a single timestep.
+
+        :param model: the model to evaluate loss on.
+        :param x_start: the [N x C x ...] tensor of inputs.
+        :param t: a batch of timestep indices.
+        :param model_kwargs: if not None, a dict of extra keyword arguments to
+            pass to the model. This can be used for conditioning.
+        :param noise: if specified, the specific Gaussian noise to try to remove.
+        :return: a dict with the key "loss" containing a tensor of shape [N].
+                 Some mean or variance settings may also have other keys.
+        """
+        assert self.loss_type == LossType.MSE or self.loss_type == LossType.RESCALED_MSE
+        assert self.model_var_type not in [ModelVarType.LEARNED, ModelVarType.LEARNED_RANGE,]
+        if discriminator:
+            x_start.requires_grad = True
+        if model_kwargs is None:
+            model_kwargs = {}
+        if noise is None:
+            noise = th.randn_like(x_start)
+        x_t = self.q_sample(x_start, t, noise=noise)
+
+        terms = {}
+        
+        model_output = model(x_t, self._scale_timesteps(t), **model_kwargs)
+
+        target = {
+            ModelMeanType.PREVIOUS_X: 
+                self.q_posterior_mean_variance(x_start=x_start, x_t=x_t, t=t)[0],
+            ModelMeanType.START_X: x_start,
+            ModelMeanType.EPSILON: noise,
+        }[self.model_mean_type]
+
+        assert model_output.shape == target.shape == x_start.shape
+
+        terms["lossDM"] = mean_flat((target - model_output) ** 2)
+
+        if discriminator:
+            x_start_hat = {
+                ModelMeanType.PREVIOUS_X: 
+                    self._predict_xstart_from_xprev(x_t, t, model_output),
+                ModelMeanType.START_X: model_output,
+                ModelMeanType.EPSILON: 
+                    self._predict_xstart_from_eps(x_t, t, model_output) 
+            }[self.model_mean_type]
+
             # Generation loss
             cond = None
             fake_pred = discriminator(x_start_hat, cond).squeeze()
@@ -840,12 +883,134 @@ class GaussianDiffusion:
                 lossD = - th.log(th.sigmoid(d_real_pred)) \
                         - th.log(1. - th.sigmoid(d_fake_pred))
             terms["lossD"] = lossD
+
             grad_real = th.autograd.grad(outputs=d_real_pred.sum(), 
                                          inputs=x_start, create_graph=True)[0]
             grad_penalty = (grad_real.view(grad_real.size(0), -1).norm(2, dim=1) ** 2)
             terms["grad_penalty"] = grad_penalty
-
+            
         return terms
+
+    def training_losses_G(self, model, discriminator,
+                          x_start, t, model_kwargs=None, noise=None, use_hinge=True):
+        """
+        Compute training losses for a single timestep.
+
+        :param model: the model to evaluate loss on.
+        :param x_start: the [N x C x ...] tensor of inputs.
+        :param t: a batch of timestep indices.
+        :param model_kwargs: if not None, a dict of extra keyword arguments to
+            pass to the model. This can be used for conditioning.
+        :param noise: if specified, the specific Gaussian noise to try to remove.
+        :return: a dict with the key "loss" containing a tensor of shape [N].
+                 Some mean or variance settings may also have other keys.
+        """
+        assert self.loss_type == LossType.MSE or self.loss_type == LossType.RESCALED_MSE
+        assert self.model_var_type not in [ModelVarType.LEARNED, ModelVarType.LEARNED_RANGE,]
+        if model_kwargs is None:
+            model_kwargs = {}
+        if noise is None:
+            noise = th.randn_like(x_start)
+        x_t = self.q_sample(x_start, t, noise=noise)
+
+        terms = {}
+        
+        model_output = model(x_t, self._scale_timesteps(t), **model_kwargs)
+
+        target = {
+            ModelMeanType.PREVIOUS_X: 
+                self.q_posterior_mean_variance(x_start=x_start, x_t=x_t, t=t)[0],
+            ModelMeanType.START_X: x_start,
+            ModelMeanType.EPSILON: noise,
+        }[self.model_mean_type]
+
+        assert model_output.shape == target.shape == x_start.shape
+
+        terms["lossDM"] = mean_flat((target - model_output) ** 2)
+
+        if discriminator:
+            x_start_hat = {
+                ModelMeanType.PREVIOUS_X: 
+                    self._predict_xstart_from_xprev(x_t, t, model_output),
+                ModelMeanType.START_X: model_output,
+                ModelMeanType.EPSILON: 
+                    self._predict_xstart_from_eps(x_t, t, model_output) 
+            }[self.model_mean_type]
+
+            # Generation loss
+            cond = None
+            fake_pred = discriminator(x_start_hat, cond).squeeze()
+            if use_hinge: #hinge
+                lossG = F.softplus(-fake_pred)
+            else: #not
+                lossG = -th.log(th.sigmoid(fake_pred))
+            terms["lossG"] = lossG
+            
+        return terms
+
+    def training_losses_D(self, model, discriminator,
+                           x_start, t, model_kwargs=None, noise=None, use_hinge=True):
+        """
+        Compute training losses for a single timestep.
+
+        :param model: the model to evaluate loss on.
+        :param x_start: the [N x C x ...] tensor of inputs.
+        :param t: a batch of timestep indices.
+        :param model_kwargs: if not None, a dict of extra keyword arguments to
+            pass to the model. This can be used for conditioning.
+        :param noise: if specified, the specific Gaussian noise to try to remove.
+        :return: a dict with the key "loss" containing a tensor of shape [N].
+                 Some mean or variance settings may also have other keys.
+        """
+        assert self.loss_type == LossType.MSE or self.loss_type == LossType.RESCALED_MSE
+        assert self.model_var_type not in [ModelVarType.LEARNED, ModelVarType.LEARNED_RANGE,]
+        if discriminator:
+            x_start.requires_grad = True
+        if model_kwargs is None:
+            model_kwargs = {}
+        if noise is None:
+            noise = th.randn_like(x_start)
+        x_t = self.q_sample(x_start, t, noise=noise)
+
+        terms = {}
+        
+        model_output = model(x_t, self._scale_timesteps(t), **model_kwargs)
+
+        target = {
+            ModelMeanType.PREVIOUS_X: 
+                self.q_posterior_mean_variance(x_start=x_start, x_t=x_t, t=t)[0],
+            ModelMeanType.START_X: x_start,
+            ModelMeanType.EPSILON: noise,
+        }[self.model_mean_type]
+
+        assert model_output.shape == target.shape == x_start.shape
+
+        if discriminator:
+            x_start_hat = {
+                ModelMeanType.PREVIOUS_X: 
+                    self._predict_xstart_from_xprev(x_t, t, model_output),
+                ModelMeanType.START_X: model_output,
+                ModelMeanType.EPSILON: 
+                    self._predict_xstart_from_eps(x_t, t, model_output) 
+            }[self.model_mean_type]
+            
+            # Discriminator loss
+            cond = None
+            d_real_pred = discriminator(x_start, cond).squeeze()
+            d_fake_pred = discriminator(x_start_hat, cond).squeeze()
+            if use_hinge:
+                lossD = F.softplus(-d_real_pred) + F.softplus(d_fake_pred)
+            else:
+                lossD = - th.log(th.sigmoid(d_real_pred)) \
+                        - th.log(1. - th.sigmoid(d_fake_pred))
+            terms["lossD"] = lossD
+
+            grad_real = th.autograd.grad(outputs=d_real_pred.sum(), 
+                                         inputs=x_start, create_graph=True)[0]
+            grad_penalty = (grad_real.view(grad_real.size(0), -1).norm(2, dim=1) ** 2)
+            terms["grad_penalty"] = grad_penalty
+            
+        return terms    
 
     def _prior_bpd(self, x_start):
         """
