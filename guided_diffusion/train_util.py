@@ -279,10 +279,10 @@ class TrainLoop:
                     use_hinge=self.use_hinge
                 )
                 if last_batch or not self.use_ddp:
-                    losses = compute_losses_D()
+                    losses.update(compute_losses_D())
                 else:
                     with self.ddp_model.no_sync() and self.ddp_discriminator.no_sync():
-                        losses = compute_losses_D()  
+                        losses.update(compute_losses_D())
                 
                 lossD = losses["lossD"] + self.grad_weight / 2 * losses["grad_penalty"]
                 losses["Discrimination"] = lossD
