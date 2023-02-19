@@ -37,8 +37,8 @@ class TrainLoop:
         microbatch,
         lr_model,
         lr_disc,
-        use_hinge,
         lossG_weight,
+        lossD_type,
         grad_weight,
         ema_rate,
         log_interval,
@@ -61,7 +61,7 @@ class TrainLoop:
         self.microbatch = microbatch if microbatch > 0 else batch_size
         self.lr_model = lr_model
         self.lr_disc = lr_disc
-        self.use_hinge = use_hinge
+        self.lossD_type = lossD_type
         self.lossG_weight = lossG_weight
         self.grad_weight = grad_weight
 
@@ -248,7 +248,7 @@ class TrainLoop:
                 micro,
                 t,
                 model_kwargs=micro_cond,
-                use_hinge=self.use_hinge
+                lossD_type=self.lossD_type
             )  
             if last_batch or not self.use_ddp:
                 losses = compute_losses_G()
@@ -276,7 +276,7 @@ class TrainLoop:
                     micro,
                     t,
                     model_kwargs=micro_cond,
-                    use_hinge=self.use_hinge
+                    lossD_type=self.lossD_type
                 )
                 if last_batch or not self.use_ddp:
                     losses.update(compute_losses_D())

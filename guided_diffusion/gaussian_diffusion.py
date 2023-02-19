@@ -818,7 +818,7 @@ class GaussianDiffusion:
         return terms
     
     def training_losses_GD(self, model, discriminator,
-                           x_start, t, model_kwargs=None, noise=None, use_hinge=True):
+                           x_start, t, model_kwargs=None, noise=None, lossD_type="hinge"):
         """
         Compute training losses for a single timestep.
 
@@ -868,20 +868,24 @@ class GaussianDiffusion:
             # Generation loss
             cond = None
             fake_pred = discriminator(x_start_hat, cond).squeeze()
-            if use_hinge: #hinge
+            if lossD_type == "hinge":
                 lossG = F.softplus(-fake_pred)
-            else: #not
+            elif lossD_type == "normal":
                 lossG = -th.log(th.sigmoid(fake_pred))
+            else:
+                raise Exception("Not implemented discriminator")
             terms["lossG"] = lossG
             
             # Discriminator loss
             d_real_pred = discriminator(x_start, cond).squeeze()
             d_fake_pred = discriminator(x_start_hat, cond).squeeze()
-            if use_hinge:
+            if lossD_type == "hinge":
                 lossD = F.softplus(-d_real_pred) + F.softplus(d_fake_pred)
-            else:
+            elif lossD_type == "normal":
                 lossD = - th.log(th.sigmoid(d_real_pred)) \
                         - th.log(1. - th.sigmoid(d_fake_pred))
+            else:
+                raise Exception("Not implemented discriminator")
             terms["lossD"] = lossD
 
             grad_real = th.autograd.grad(outputs=d_real_pred.sum(), 
@@ -892,7 +896,7 @@ class GaussianDiffusion:
         return terms
 
     def training_losses_G(self, model, discriminator,
-                          x_start, t, model_kwargs=None, noise=None, use_hinge=True):
+                          x_start, t, model_kwargs=None, noise=None, lossD_type="hinge"):
         """
         Compute training losses for a single timestep.
 
@@ -940,16 +944,18 @@ class GaussianDiffusion:
             # Generation loss
             cond = None
             fake_pred = discriminator(x_start_hat, cond).squeeze()
-            if use_hinge: #hinge
+            if lossD_type == "hinge": #hinge
                 lossG = F.softplus(-fake_pred)
-            else: #not
+            elif lossD_type == "normal": #not
                 lossG = -th.log(th.sigmoid(fake_pred))
+            else:
+                raise Exception("Not implemented discriminator")
             terms["lossG"] = lossG
             
         return terms
 
     def training_losses_D(self, model, discriminator,
-                           x_start, t, model_kwargs=None, noise=None, use_hinge=True):
+                           x_start, t, model_kwargs=None, noise=None, lossD_type=""):
         """
         Compute training losses for a single timestep.
 
@@ -998,11 +1004,13 @@ class GaussianDiffusion:
             cond = None
             d_real_pred = discriminator(x_start, cond).squeeze()
             d_fake_pred = discriminator(x_start_hat, cond).squeeze()
-            if use_hinge:
+            if lossD_type == "hinge":
                 lossD = F.softplus(-d_real_pred) + F.softplus(d_fake_pred)
-            else:
+            elif lossD_type == "normal":
                 lossD = - th.log(th.sigmoid(d_real_pred)) \
                         - th.log(1. - th.sigmoid(d_fake_pred))
+            else:
+                raise Exception("Not implemented discriminator")
             terms["lossD"] = lossD
 
             grad_real = th.autograd.grad(outputs=d_real_pred.sum(), 

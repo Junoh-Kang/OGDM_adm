@@ -478,7 +478,12 @@ def configure(dir='./logs', project='', exp='', config=None,
     """
     If comm is provided, average all numerical stats across that comm
     """
-    exp_name = datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S-%f_") + exp
+    KST = datetime.timezone(datetime.timedelta(hours=9))
+    exp_name = datetime.datetime.now(tz=KST).strftime("%Y-%m-%d-%H-%M-%S_") + exp
+    for item in config["log"]:
+        exp_name += ":" + item + f"={config[item]}"
+    # exp_name += datetime.datetime.now(tz=KST).strftime("_%Y-%m-%d-%H-%M-%S-%f")
+    
     dir = osp.join(dir, project, exp_name,)
     assert isinstance(dir, str)
 
