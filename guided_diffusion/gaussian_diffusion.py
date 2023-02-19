@@ -868,10 +868,10 @@ class GaussianDiffusion:
             # Generation loss
             cond = None
             fake_pred = discriminator(x_start_hat, cond).squeeze()
-            if lossD_type == "hinge":
+            if lossD_type == "logistic":
                 lossG = F.softplus(-fake_pred)
-            elif lossD_type == "normal":
-                lossG = -th.log(th.sigmoid(fake_pred))
+            elif lossD_type == "hinge":
+                lossG = -fake_pred
             else:
                 raise Exception("Not implemented discriminator")
             terms["lossG"] = lossG
@@ -879,11 +879,11 @@ class GaussianDiffusion:
             # Discriminator loss
             d_real_pred = discriminator(x_start, cond).squeeze()
             d_fake_pred = discriminator(x_start_hat, cond).squeeze()
-            if lossD_type == "hinge":
+            if lossD_type == "logistic":
                 lossD = F.softplus(-d_real_pred) + F.softplus(d_fake_pred)
-            elif lossD_type == "normal":
-                lossD = - th.log(th.sigmoid(d_real_pred)) \
-                        - th.log(1. - th.sigmoid(d_fake_pred))
+            elif lossD_type == "hinge":
+                hinge = th.nn.ReLU(inplace=True)
+                lossD = hinge(1.0 - d_real_pred) + hinge(1.0 + d_fake_pred)
             else:
                 raise Exception("Not implemented discriminator")
             terms["lossD"] = lossD
@@ -944,10 +944,10 @@ class GaussianDiffusion:
             # Generation loss
             cond = None
             fake_pred = discriminator(x_start_hat, cond).squeeze()
-            if lossD_type == "hinge": #hinge
+            if lossD_type == "logistic":
                 lossG = F.softplus(-fake_pred)
-            elif lossD_type == "normal": #not
-                lossG = -th.log(th.sigmoid(fake_pred))
+            elif lossD_type == "hinge":
+                lossG = -fake_pred
             else:
                 raise Exception("Not implemented discriminator")
             terms["lossG"] = lossG
@@ -1004,11 +1004,11 @@ class GaussianDiffusion:
             cond = None
             d_real_pred = discriminator(x_start, cond).squeeze()
             d_fake_pred = discriminator(x_start_hat, cond).squeeze()
-            if lossD_type == "hinge":
+            if lossD_type == "logistic":
                 lossD = F.softplus(-d_real_pred) + F.softplus(d_fake_pred)
-            elif lossD_type == "normal":
-                lossD = - th.log(th.sigmoid(d_real_pred)) \
-                        - th.log(1. - th.sigmoid(d_fake_pred))
+            elif lossD_type == "hinge":
+                hinge = th.nn.ReLU(inplace=True)
+                lossD = hinge(1.0 - d_real_pred) + hinge(1.0 + d_fake_pred)
             else:
                 raise Exception("Not implemented discriminator")
             terms["lossD"] = lossD
