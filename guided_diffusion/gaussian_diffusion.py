@@ -1018,9 +1018,11 @@ class GaussianDiffusion:
             grad_penalty = (grad_real.view(grad_real.size(0), -1).norm(2, dim=1) ** 2)
             terms["grad_penalty"] = grad_penalty
             
+            terms["real_score"] = d_real_pred
+            terms["fake_score"] = d_fake_pred
             terms["real_acc"] = d_real_pred > 0.0
             terms["fake_acc"] = d_fake_pred < 0.0
-
+            
         return terms    
 
     def _prior_bpd(self, x_start):
