@@ -36,10 +36,11 @@ def main():
     if args.use_discriminator:
         discriminator = create_discriminator(
             image_size=args.image_size,
+            t_dim=args.t_dim,
         ).to(dist_util.dev())
     else:
         discriminator = None
-
+    
     diffusion_kwargs = args_to_dict(args, diffusion_defaults().keys())
     diffusion = create_gaussian_diffusion(**diffusion_kwargs)
     diffusion_kwargs['timestep_respacing'] = "ddim200"

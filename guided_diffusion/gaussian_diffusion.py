@@ -865,9 +865,10 @@ class GaussianDiffusion:
                     self._predict_xstart_from_eps(x_t, t, model_output) 
             }[self.model_mean_type]
 
-            # Generation loss
             cond = None
-            fake_pred = discriminator(x_start_hat, cond).squeeze()
+            t_cond = t.unsqueeze(dim=1) if discriminator.module.t_dim > 0 else None
+            # Generation loss
+            fake_pred = discriminator(x_start_hat, cond, t_cond).squeeze()
             if lossD_type == "logistic":
                 lossG = F.softplus(-fake_pred)
             elif lossD_type == "hinge":
@@ -877,8 +878,8 @@ class GaussianDiffusion:
             terms["lossG"] = lossG
             
             # Discriminator loss
-            d_real_pred = discriminator(x_start, cond).squeeze()
-            d_fake_pred = discriminator(x_start_hat, cond).squeeze()
+            d_real_pred = discriminator(x_start, cond, t_cond).squeeze()
+            d_fake_pred = discriminator(x_start_hat, cond, t_cond).squeeze()
             if lossD_type == "logistic":
                 lossD = F.softplus(-d_real_pred) + F.softplus(d_fake_pred)
             elif lossD_type == "hinge":
@@ -931,7 +932,7 @@ class GaussianDiffusion:
         assert model_output.shape == target.shape == x_start.shape
 
         terms["lossDM"] = mean_flat((target - model_output) ** 2)
-
+        
         if discriminator:
             x_start_hat = {
                 ModelMeanType.PREVIOUS_X: 
@@ -941,9 +942,10 @@ class GaussianDiffusion:
                     self._predict_xstart_from_eps(x_t, t, model_output) 
             }[self.model_mean_type]
 
-            # Generation loss
             cond = None
-            fake_pred = discriminator(x_start_hat, cond).squeeze()
+            t_cond = t.unsqueeze(dim=1) if discriminator.module.t_dim > 0 else None
+            # Generation loss
+            fake_pred = discriminator(x_start_hat, cond, t_cond).squeeze()
             if lossD_type == "logistic":
                 lossG = F.softplus(-fake_pred)
             elif lossD_type == "hinge":
@@ -1000,10 +1002,11 @@ class GaussianDiffusion:
                     self._predict_xstart_from_eps(x_t, t, model_output) 
             }[self.model_mean_type]
             
-            # Discriminator loss
             cond = None
-            d_real_pred = discriminator(x_start, cond).squeeze()
-            d_fake_pred = discriminator(x_start_hat, cond).squeeze()
+            t_cond = t.unsqueeze(dim=1) if discriminator.module.t_dim > 0 else None
+            # Discriminator loss
+            d_real_pred = discriminator(x_start, cond, t_cond).squeeze()
+            d_fake_pred = discriminator(x_start_hat, cond, t_cond).squeeze()
             if lossD_type == "logistic":
                 lossD = F.softplus(-d_real_pred) + F.softplus(d_fake_pred)
             elif lossD_type == "hinge":

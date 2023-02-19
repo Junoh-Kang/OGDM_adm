@@ -623,7 +623,6 @@ class DiscriminatorEpilogue(torch.nn.Module):
         mbstd_num_channels  = 1,        # Number of features for the minibatch standard deviation layer, 0 = disable.
         activation          = 'lrelu',  # Activation function: 'relu', 'lrelu', etc.
         conv_clamp          = None,     # Clamp the output of convolution layers to +-X, None = disable clamping.
-        #n_disc              = None,
     ):
         assert architecture in ['orig', 'skip', 'resnet']
         super().__init__()
@@ -632,8 +631,6 @@ class DiscriminatorEpilogue(torch.nn.Module):
         self.resolution = resolution
         self.img_channels = img_channels
         self.architecture = architecture
-        #self.n_disc = n_disc
-        
         if architecture == 'skip':
             self.fromrgb = Conv2dLayer(img_channels, in_channels, kernel_size=1, activation=activation)
         self.mbstd = MinibatchStdLayer(group_size=mbstd_group_size, num_channels=mbstd_num_channels) if mbstd_num_channels > 0 else None
@@ -671,11 +668,11 @@ class DiscriminatorEpilogue(torch.nn.Module):
         return x
 
 #----------------------------------------------------------------------------
-
 @persistence.persistent_class
 class Discriminator(torch.nn.Module):
     def __init__(self,
         c_dim               = 0,        # Conditioning label (C) dimensionality.
+        t_dim               = 1,        # Diffusion timestep dimensionality
         img_resolution      = 256,      # Input resolution.
         img_channels        = 3,        # Number of input color channels.
         architecture        = 'resnet', # Architecture: 'orig', 'skip', 'resnet'.
@@ -689,7 +686,10 @@ class Discriminator(torch.nn.Module):
         epilogue_kwargs     = {},       # Arguments for DiscriminatorEpilogue.
     ):
         super().__init__()
+        c_dim = c_dim + t_dim
+
         self.c_dim = c_dim
+        self.t_dim = t_dim
         self.img_resolution = img_resolution
         self.img_resolution_log2 = int(np.log2(img_resolution))
         self.img_channels = img_channels
@@ -717,15 +717,22 @@ class Discriminator(torch.nn.Module):
             self.mapping = MappingNetwork(z_dim=0, c_dim=c_dim, w_dim=cmap_dim, num_ws=None, w_avg_beta=None, **mapping_kwargs)
         self.b4 = DiscriminatorEpilogue(channels_dict[4], cmap_dim=cmap_dim, resolution=4, **epilogue_kwargs, **common_kwargs)
 
-    def forward(self, img, c, **block_kwargs):
+    def forward(self, img, c, t, **block_kwargs):
+        
         x = None
         for res in self.block_resolutions:
             block = getattr(self, f'b{res}')
             x, img = block(x, img, **block_kwargs)
 
+        # if len(c.shape) == 1:
+        #     c = c.unsqueeze(dim=1)
+        # if len(t.shape) == 1:
+        #     t = t.unsqueeze(dim=1)
         cmap = None
         if self.c_dim > 0:
+            c = torch.cat((c, t), dim=1) if c is not None else t
             cmap = self.mapping(None, c)
+
         x = self.b4(x, img, cmap)
 
         return x

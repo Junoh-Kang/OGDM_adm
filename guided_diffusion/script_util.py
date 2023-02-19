@@ -50,6 +50,7 @@ def discriminator_defaults():
     """
     return dict(
         c_dim                   = 0,        # Conditioning label (C) dimensionality.
+        t_dim                   = 0,        # Diffusion timestep dimensionality
         img_resolution          = 64,      # Input resolution.
         img_channels            = 3,        # Number of input color channels.
         architecture            = 'resnet', # Architecture: 'orig', 'skip', 'resnet'.
@@ -161,6 +162,7 @@ def create_model(
 
 def create_discriminator(
     c_dim=0,
+    t_dim=0,
     image_size=64,         
     img_channels=3,
     architecture='resnet',
@@ -174,7 +176,8 @@ def create_discriminator(
     epilogue_kwargs={},
 ):
     return Discriminator(
-        c_dim=c_dim,     
+        c_dim=c_dim,
+        t_dim=t_dim,     
         img_resolution=image_size,   
         img_channels=img_channels,   
         architecture=architecture,

@@ -266,7 +266,7 @@ class TrainLoop:
                 lossG = losses["lossDM"] * weights
             
             self.mp_trainer_model.backward(lossG.mean())
-
+            
             # compute Discrimination loss and backward
             if self.ddp_discriminator:
                 compute_losses_D = functools.partial(
@@ -443,13 +443,12 @@ def find_ema_checkpoint(main_checkpoint, step, rate):
         return path
     return None
 
-
 def log_loss_dict(step, diffusion, ts, losses):
     for key, values in losses.items():
-        logger.logkv_mean(key, values.mean().item())
+        # logger.logkv_mean(key, values.mean().item())
         wandb.log({key: values.mean().item()}, step=step)
         # Log the quantiles (four quartiles, in particular).
         for sub_t, sub_loss in zip(ts.cpu().numpy(), values.detach().cpu().numpy()):
             quartile = int(4 * sub_t / diffusion.num_timesteps)
-            logger.logkv_mean(f"{key}_q{quartile}", sub_loss)
-            wandb.log({f"{key}_q{quartile}": sub_loss}, step=step)
+            # logger.logkv_mean(f"{key}_q{quartile}", sub_loss)
+            wandb.log({f"{key}/{key}_q{quartile}": sub_loss}, step=step)
