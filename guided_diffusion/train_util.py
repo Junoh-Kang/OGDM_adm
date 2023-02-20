@@ -389,10 +389,10 @@ class TrainLoop:
         ddim_sample_fn = self.sampling_diffusion.ddim_sample_loop
         # sample
         ddpm_model_sample = self.sample(sample_fn=ddpm_sample_fn, model=self.ddp_model, 
-                                        sample_num=8, size=size)
+                                        sample_num=16, size=size)
         ddpm_model_sample = torchvision.utils.make_grid(ddpm_model_sample, 4).permute(1,2,0).numpy()
         ddim_model_sample = self.sample(sample_fn=ddim_sample_fn, model=self.ddp_model, 
-                                        sample_num=8, size=size)
+                                        sample_num=16, size=size)
         ddim_model_sample = torchvision.utils.make_grid(ddim_model_sample, 4).permute(1,2,0).numpy()
 
         # save        

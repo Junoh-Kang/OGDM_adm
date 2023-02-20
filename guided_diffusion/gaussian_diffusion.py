@@ -979,6 +979,7 @@ class GaussianDiffusion:
             # Discriminator loss
             d_real_pred = discriminator(real, cond, t_cond).squeeze()
             d_fake_pred = discriminator(fake, cond, t_cond).squeeze()
+            
             if lossD_type == "logistic":
                 lossD = F.softplus(-d_real_pred) + F.softplus(d_fake_pred)
             elif lossD_type == "hinge":
