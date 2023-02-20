@@ -428,7 +428,6 @@ def get_blob_logdir():
     # a blobstore or some external drive.
     return logger.get_dir()
 
-
 def find_resume_checkpoint():
     # On your infrastructure, you may want to override this to automatically
     # discover the latest checkpoint on your blob storage, etc.
@@ -444,12 +443,29 @@ def find_ema_checkpoint(main_checkpoint, step, rate):
     return None
 
 def log_loss_dict(step, diffusion, ts, losses):
-    for key, values in losses.items():
-        # logger.logkv_mean(key, values.mean().item())
-        wandb.log({key: values.mean().item()}, step=step)
-        # Log the quantiles (four quartiles, in particular).
-        for sub_t, sub_loss in zip(ts.cpu().numpy(), values.detach().cpu().numpy()):
+
+    train_key = [key for key in losses.keys() if key in \
+        ["Generation", "lossDM", "lossG", "Discrimination", "lossD", "grad_penalty"]]
+    supple_key = [key for key in losses.keys() if key in \
+        ["real_score", "fake_score", "real_acc", "fake_acc"]]
+    
+    for key in train_key:
+        wandb.log({f"Train/{key}": losses[key].mean().item()}, step=step)
+        for sub_t, sub_loss in zip(ts.cpu().numpy(), losses[key].detach().cpu().numpy()):
             quartile = int(4 * sub_t / diffusion.num_timesteps)
-            # logger.logkv_mean(f"{key}_q{quartile}", sub_loss)
-            # wandb.log({f"{key}/{key}_q{quartile}": sub_loss}, step=step)
-            wandb.log({f"{key}/q{quartile}": sub_loss}, step=step)
+            wandb.log({f"TrainSupple/{key}_q{quartile}": sub_loss}, step=step)
+    
+    for key in supple_key:
+        wandb.log({f"Eval/{key}": losses[key].mean().item()}, step=step)
+        for sub_t, sub_loss in zip(ts.cpu().numpy(), losses[key].detach().cpu().numpy()):
+            quartile = int(4 * sub_t / diffusion.num_timesteps)
+            wandb.log({f"EvalSupple/{key}_q{quartile}": sub_loss}, step=step)
+        
+    # for key, values in losses.items():
+    #     # logger.logkv_mean(key, values.mean().item())
+    #     wandb.log({key: values.mean().item()}, step=step)
+    #     # Log the quantiles (four quartiles, in particular).
+    #     for sub_t, sub_loss in zip(ts.cpu().numpy(), values.detach().cpu().numpy()):
+    #         quartile = int(4 * sub_t / diffusion.num_timesteps)
+    #         # logger.logkv_mean(f"{key}_q{quartile}", sub_loss)
+    #         wandb.log({f"{key}/q{quartile}": sub_loss}, step=step)
