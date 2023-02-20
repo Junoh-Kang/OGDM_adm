@@ -41,7 +41,7 @@ class TrainLoop:
         lossD_type,
         grad_weight,
         ema_rate,
-        log_interval,
+        # log_interval,
         save_interval,
         sample_num,
         resume_checkpoint,
@@ -70,7 +70,7 @@ class TrainLoop:
             if isinstance(ema_rate, float)
             else [float(x) for x in ema_rate.split(",")]
         )
-        self.log_interval = log_interval
+        # self.log_interval = log_interval
         self.save_interval = save_interval
         self.sample_num = sample_num
         
@@ -200,8 +200,8 @@ class TrainLoop:
         ):
             batch, cond = next(self.data)
             self.run_step(batch, cond)
-            if self.step % self.log_interval == 0:
-                logger.dumpkvs()
+            # if self.step % self.log_interval == 0:
+            #     logger.dumpkvs()
             if (self.step % self.save_interval == 0) and self.step > 0:
                 self.save()
                 self.sample_and_save(batch.shape)
@@ -223,7 +223,7 @@ class TrainLoop:
         if took_step:
             self._update_ema()
         self._anneal_lr()
-        self.log_step()
+        # self.log_step()
 
     def forward_backward(self, batch, cond):
 
@@ -287,7 +287,10 @@ class TrainLoop:
                 lossD = losses["lossD"] + self.grad_weight / 2 * losses["grad_penalty"]
                 losses["Discrimination"] = lossD
                 self.mp_trainer_disc.backward(lossD.mean())
-            
+
+            wandb.log({f"Train/Samples": 
+                        (self.step + self.resume_step + 1) * self.global_batch},
+                        step=self.step)
             log_loss_dict(
                 self.step,
                 self.diffusion, t, {k: v * weights for k, v in losses.items()}

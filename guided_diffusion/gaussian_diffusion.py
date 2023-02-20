@@ -991,12 +991,13 @@ class GaussianDiffusion:
             grad_real = th.autograd.grad(outputs=d_real_pred.sum(), 
                                          inputs=real, create_graph=True)[0]
             grad_penalty = (grad_real.view(grad_real.size(0), -1).norm(2, dim=1) ** 2)
+
             terms["grad_penalty"] = grad_penalty
-            
-            terms["real_score"] = d_real_pred
-            terms["fake_score"] = d_fake_pred
-            terms["real_acc"] = d_real_pred > 0.0
-            terms["fake_acc"] = d_fake_pred < 0.0
+            with th.no_grad():
+                terms["real_score"] = th.sigmoid(d_real_pred)
+                terms["fake_score"] = th.sigmoid(d_fake_pred)
+                terms["real_acc"] = d_real_pred > 0.0
+                terms["fake_acc"] = d_fake_pred < 0.0
             
         return terms    
 
