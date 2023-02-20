@@ -97,6 +97,16 @@ def create_argparser_and_config():
     parser = argparse.ArgumentParser()
     parser.add_argument('--config', default=tmp_args.config, type=str)
     cfg = load_config(tmp_args.config)
+    
+    # check is there any omitted keys
+    err = ""
+    for k in tmp.keys():
+        if k not in cfg.keys():
+            err += k + ", "
+    if err:
+        err += "not implemented"       
+        raise Exception(err)
+    
     add_dict_to_argparser(parser, cfg)
     args = parser.parse_args()
 
