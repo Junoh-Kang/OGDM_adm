@@ -90,7 +90,10 @@ def load_config(cfg_dir):
 def create_argparser_and_config():
     tmp_parser = argparse.ArgumentParser()
     tmp_parser.add_argument('--config', type=str)
-    tmp = load_config('./configs/_default.yaml')
+    try:
+        tmp = load_config('./configs/_default.yaml')
+    except:
+        tmp = load_config('./configs_lg/_default.yaml')
     add_dict_to_argparser(tmp_parser, tmp)
     tmp_args = tmp_parser.parse_args()
 

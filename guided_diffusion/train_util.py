@@ -203,6 +203,8 @@ class TrainLoop:
             # if self.step % self.log_interval == 0:
             #     logger.dumpkvs()
             if (self.step % self.save_interval == 0) and self.step > 0:
+                self.log_step()
+                logger.dumpkvs()
                 self.save()
                 self.sample_and_save(batch.shape)
                 # self.sample_and_cal_fid(num_samples, batch.shape)        
@@ -212,6 +214,8 @@ class TrainLoop:
             self.step += 1
         # Save the last checkpoint if it wasn't already saved.
         if (self.step - 1) % self.save_interval != 0:
+            self.log_step()
+            logger.dumpkvs()
             self.save()
             self.sample_and_save(batch.shape)
 
