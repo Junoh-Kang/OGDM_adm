@@ -14,8 +14,20 @@ def create_named_schedule_sampler(name, diffusion):
     """
     if name == "uniform":
         return UniformSampler(diffusion)
-    elif name == "loss-second-moment":
+    elif name == "loss_aware":
         return LossSecondMomentResampler(diffusion)
+    elif name.startswith("disc_aware_uniform"):
+        try: 
+            end = name.split(":")[1] + ")"
+        except:
+            end = ")"
+        return eval("DiscAwareResampler(diffusion, sample_type='uniform'," + end)
+    elif name.startswith("disc_aware_priority"):
+        try: 
+            end = name.split(":")[1] + ")"
+        except:
+            end = ")"
+        return eval("DiscAwareResampler(diffusion, sample_type='priority'," + end)
     else:
         raise NotImplementedError(f"unknown schedule sampler: {name}")
 
@@ -66,6 +78,44 @@ class UniformSampler(ScheduleSampler):
     def weights(self):
         return self._weights
 
+class DiscAwareResampler(ScheduleSampler):
+    def __init__(self, diffusion, sample_type="uniform", loss_target=0.7, ema_rate=0.9):        
+        
+        # self.diffusion = diffusion
+        self.T_max = diffusion.num_timesteps
+        self.T_min = self.T_max // 100
+        self.T_step = self.T_max // 100
+        self.T_cur = self.T_min
+        
+        self.loss_target = loss_target
+        self.loss_cur = 0
+        self.loss_ema = 0
+        
+        self.ema_rate = ema_rate
+
+        self.sample_type = sample_type
+        self._weights = self.get_weights()
+
+    def weights(self):
+        return self._weights
+
+    def get_weights(self):
+        if self.sample_type == "uniform":
+            return np.concatenate((np.ones(self.T_cur), np.zeros(self.T_max-self.T_cur)))
+        elif self.sample_type == "priority":
+            return np.concatenate((np.arange(self.T_cur), np.zeros(self.T_max-self.T_cur)))
+
+    def update_with_local_losses(self, losses):
+        # update loss
+        self.loss_cur = losses.mean().squeeze()
+        self.loss_ema = self.ema_rate * self.loss_cur + (1 - self.ema_rate) * self.loss_ema
+        # update T_cur and weights
+        if self.loss_ema > self.loss_target:
+            self.T_cur = min(self.T_cur + self.T_step, self.T_max)
+        else:
+            self.T_cur = max(self.T_cur - self.T_step, self.T_min)
+        self._weights = self.get_weights()
+        return self.T_cur
 
 class LossAwareSampler(ScheduleSampler):
     def update_with_local_losses(self, local_ts, local_losses):

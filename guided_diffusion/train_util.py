@@ -16,7 +16,7 @@ import torchvision
 from . import dist_util, logger
 from .fp16_util import MixedPrecisionTrainer
 from .nn import update_ema
-from .resample import LossAwareSampler, UniformSampler
+from .resample import LossAwareSampler, UniformSampler, DiscAwareResampler
 
 # For ImageNet experiments, this was a good default value.
 # We found that the lg_loss_scale quickly climbed to
@@ -258,10 +258,7 @@ class TrainLoop:
             else:
                 with self.ddp_model.no_sync():
                     losses = compute_losses_G()
-            if isinstance(self.schedule_sampler, LossAwareSampler):
-                self.schedule_sampler.update_with_local_losses(
-                    t, losses["lossDM"].detach()
-                )
+
             if self.ddp_discriminator:
                 lossG = losses["lossDM"] * weights + self.lossG_weight * losses["lossG"]
                 losses["Generation"] = lossG
@@ -290,7 +287,8 @@ class TrainLoop:
                 lossD = losses["lossD"] + self.grad_weight / 2 * losses["grad_penalty"]
                 losses["Discrimination"] = lossD
                 self.mp_trainer_disc.backward(lossD.mean())
-
+            
+            # log losses
             wandb.log({f"Train/Samples": 
                         (self.step + self.resume_step + 1) * self.global_batch},
                         step=self.step)
@@ -298,6 +296,17 @@ class TrainLoop:
                 self.step,
                 self.diffusion, t, {k: v * weights for k, v in losses.items()}
             )
+            
+            # update sampler        
+            if isinstance(self.schedule_sampler, LossAwareSampler):
+                self.schedule_sampler.update_with_local_losses(
+                    t, losses["lossDM"].detach()
+                )
+            elif isinstance(self.schedule_sampler, DiscAwareResampler):
+                T_cur = self.schedule_sampler.update_with_local_losses(
+                    losses["real_acc"].detach()
+                )
+                wandb.log({"Train/T_cur": T_cur}, step=self.step)
 
     def _update_ema(self):
         for rate, params in zip(self.ema_rate, self.ema_params):
@@ -457,7 +466,7 @@ def log_loss_dict(step, diffusion, ts, losses):
         ["Generation", "lossDM", "lossG", "Discrimination", "lossD", "grad_penalty"]]
     supple_key = [key for key in losses.keys() if key in \
         ["real_score", "fake_score", "real_acc", "fake_acc"]]
-    
+
     for key in train_key:
         wandb.log({f"Train/{key}": losses[key].mean().item()}, step=step)
         for sub_t, sub_loss in zip(ts.cpu().numpy(), losses[key].detach().cpu().numpy()):

@@ -997,8 +997,8 @@ class GaussianDiffusion:
             with th.no_grad():
                 terms["real_score"] = th.sigmoid(d_real_pred)
                 terms["fake_score"] = th.sigmoid(d_fake_pred)
-                terms["real_acc"] = d_real_pred > 0.0
-                terms["fake_acc"] = d_fake_pred < 0.0
+                terms["real_acc"] = (d_real_pred > 0.0).float()
+                terms["fake_acc"] = (d_fake_pred < 0.0).float()
             
         return terms    
 
