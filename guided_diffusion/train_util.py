@@ -398,15 +398,17 @@ class TrainLoop:
         # save        
         if dist.get_rank() == 0:
             # ddpm sampled
-            filename = f"samples/model_ddpm_{(self.step+self.resume_step):06d}.png"
+            sample_step = len(self.diffusion.use_timesteps)
+            filename = f"samples/model_ddpm{sample_step}_{(self.step+self.resume_step):06d}.png"
             with bf.BlobFile(bf.join(get_blob_logdir(), filename), "wb") as f:
                 Image.fromarray(ddpm_model_sample).save(f)
-            wandb.log({"ddpm_model": wandb.Image(ddpm_model_sample)})
+            wandb.log({f"ddpm{sample_step}_model": wandb.Image(ddpm_model_sample)})
             # ddim sampled
-            filename = f"samples/model_ddim200_{(self.step+self.resume_step):06d}.png"
+            sample_step = len(self.sampling_diffusion.use_timesteps)
+            filename = f"samples/model_ddim{sample_step}_{(self.step+self.resume_step):06d}.png"
             with bf.BlobFile(bf.join(get_blob_logdir(), filename), "wb") as f:
                 Image.fromarray(ddim_model_sample).save(f)
-            wandb.log({"ddim_model": wandb.Image(ddim_model_sample)})
+            wandb.log({f"ddim{sample_step}_model": wandb.Image(ddim_model_sample)})
             
     def sample_and_fid(self, size):
         return

@@ -43,7 +43,7 @@ def main():
     
     diffusion_kwargs = args_to_dict(args, diffusion_defaults().keys())
     diffusion = create_gaussian_diffusion(**diffusion_kwargs)
-    diffusion_kwargs['timestep_respacing'] = "ddim200"
+    diffusion_kwargs['timestep_respacing'] = args.sample_type
     sampling_diffusion = create_gaussian_diffusion(**diffusion_kwargs)
     
     schedule_sampler = create_named_schedule_sampler(args.schedule_sampler, diffusion)
