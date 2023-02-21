@@ -206,7 +206,7 @@ class TrainLoop:
                 self.log_step()
                 logger.dumpkvs()
                 self.save()
-                self.sample_and_save(batch.shape)
+                self.sample_and_save(batch.shape, sample_num=64, grid_row=8)
                 # self.sample_and_cal_fid(num_samples, batch.shape)        
                 # Run for a finite amount of time in integration tests.
                 if os.environ.get("DIFFUSION_TRAINING_TEST", "") and self.step > 0:
@@ -386,18 +386,18 @@ class TrainLoop:
         model.train()
         return th.cat(all_images)
     
-    def sample_and_save(self, size):
+    def sample_and_save(self, size, sample_num=16, grid_row=4):
 
         # sampler
         ddpm_sample_fn = self.diffusion.p_sample_loop
         ddim_sample_fn = self.sampling_diffusion.ddim_sample_loop
         # sample
         ddpm_model_sample = self.sample(sample_fn=ddpm_sample_fn, model=self.ddp_model, 
-                                        sample_num=16, size=size)
-        ddpm_model_sample = torchvision.utils.make_grid(ddpm_model_sample, 4).permute(1,2,0).numpy()
+                                        sample_num=sample_num, size=size)
+        ddpm_model_sample = torchvision.utils.make_grid(ddpm_model_sample, grid_row).permute(1,2,0).numpy()
         ddim_model_sample = self.sample(sample_fn=ddim_sample_fn, model=self.ddp_model, 
-                                        sample_num=16, size=size)
-        ddim_model_sample = torchvision.utils.make_grid(ddim_model_sample, 4).permute(1,2,0).numpy()
+                                        sample_num=sample_num, size=size)
+        ddim_model_sample = torchvision.utils.make_grid(ddim_model_sample, grid_row).permute(1,2,0).numpy()
 
         # save        
         if dist.get_rank() == 0:
