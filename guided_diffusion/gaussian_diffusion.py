@@ -903,7 +903,7 @@ class GaussianDiffusion:
                 fake = x_start_hat
                 t_cond = None
             else:
-                real = self.ddim_step(x_t, x_start, t)
+                # real = self.ddim_step(x_t, x_start, t)
                 fake = self.ddim_step(x_t, x_start_hat, t)
                 t_cond = t.unsqueeze(dim=1)
 

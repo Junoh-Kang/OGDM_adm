@@ -447,11 +447,9 @@ def configure(dir='./logs', project='', exp='', config=None,
     """
     KST = datetime.timezone(datetime.timedelta(hours=9))
     exp_name = exp + "@"
-    # exp_name = datetime.datetime.now(tz=KST).strftime("%Y-%m-%d-%H-%M-%S_") + exp
     l = []
     for item in config["log"]:
         l.append(item + f"={config[item]}")
-        # exp_name += item + f"={config[item]}" + ":"
     exp_name += ','.join(l)
     exp_name += datetime.datetime.now(tz=KST).strftime("|%Y-%m-%d-%H-%M-%S-%f")
     
