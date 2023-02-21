@@ -23,7 +23,6 @@ from .resample import LossAwareSampler, UniformSampler
 # 20-21 within the first ~1K steps of training.
 INITIAL_LOG_LOSS_SCALE = 20.0
 
-
 class TrainLoop:
     def __init__(
         self,
@@ -206,7 +205,7 @@ class TrainLoop:
                 self.log_step()
                 logger.dumpkvs()
                 self.save()
-                self.sample_and_save(batch.shape, sample_num=64, grid_row=8)
+                self.sample_and_save(batch.shape, sample_num=self.sample_num)
                 # self.sample_and_cal_fid(num_samples, batch.shape)        
                 # Run for a finite amount of time in integration tests.
                 if os.environ.get("DIFFUSION_TRAINING_TEST", "") and self.step > 0:
@@ -386,8 +385,9 @@ class TrainLoop:
         model.train()
         return th.cat(all_images)
     
-    def sample_and_save(self, size, sample_num=16, grid_row=4):
-
+    def sample_and_save(self, size, sample_num=64):
+        
+        grid_row = min(max(int(sample_num**0.5),4),sample_num)
         # sampler
         ddpm_sample_fn = self.diffusion.p_sample_loop
         ddim_sample_fn = self.sampling_diffusion.ddim_sample_loop
