@@ -17,10 +17,10 @@ def create_named_schedule_sampler(name, diffusion):
         return UniformSampler(diffusion)
     elif name == "loss_aware":
         return LossSecondMomentResampler(diffusion)
-    elif name.startswith("disc_aware"):
-        return eval( 
-            "DiscAwareResampler(diffusion," + ",".join(name.split(",")[1:]) + ")"
-        )
+    # elif name.startswith("disc_aware"):
+    #     return eval( 
+    #         "DiscAwareResampler(diffusion," + ",".join(name.split(",")[1:]) + ")"
+    #     )
     else:
         raise NotImplementedError(f"unknown schedule sampler: {name}")
 
@@ -71,47 +71,48 @@ class UniformSampler(ScheduleSampler):
     def weights(self):
         return self._weights
 
-class DiscAwareResampler(ScheduleSampler):
-    def __init__(self, diffusion, sample_type="uniform", loss_target=0.7, ):        
+# class DiscAwareResampler(ScheduleSampler):
+#     def __init__(self, diffusion, sample_type="uniform", 
+#                        loss_name="", loss_target=0.7, ):        
         
-        # self.diffusion = diffusion
-        self.T_max = diffusion.num_timesteps
-        self.T_min = self.T_max // 100
-        self.T_step = self.T_max // 100
-        self.T_cur = self.T_max
+#         # self.diffusion = diffusion
+#         self.T_max = diffusion.num_timesteps
+#         self.T_min = self.T_max // 100
+#         self.T_step = self.T_max // 100
+#         self.T_cur = self.T_max
         
-        self.loss_target = loss_target
-        self.loss_cur = 0
-        self.loss_ema = 0
+#         self.loss_target = loss_target
+#         self.loss_cur = 0
+#         self.loss_ema = 0
         
-        self.ema_rate = 0.9
+#         self.ema_rate = 0.9
 
-        self.sample_type = sample_type
-        self._weights = self.get_weights()
+#         self.sample_type = sample_type
+#         self._weights = self.get_weights()
 
-    def weights(self):
-        return self._weights
+#     def weights(self):
+#         return self._weights
 
-    def get_weights(self):
-        if self.sample_type == "uniform":
-            return np.concatenate((np.ones(self.T_cur), np.zeros(self.T_max-self.T_cur)))[::-1]
-        elif self.sample_type == "priority":
-            return np.concatenate((np.arange(self.T_cur), np.zeros(self.T_max-self.T_cur)))[::-1]
+#     def get_weights(self):
+#         if self.sample_type == "uniform":
+#             return np.concatenate((np.ones(self.T_cur), np.zeros(self.T_max-self.T_cur)))[::-1]
+#         elif self.sample_type == "priority":
+#             return np.concatenate((np.arange(self.T_cur), np.zeros(self.T_max-self.T_cur)))[::-1]
 
-    def update_with_local_losses(self, losses):
-        # update loss
-        self.loss_cur = losses.mean().squeeze()
-        self.loss_ema = self.ema_rate * self.loss_cur + (1 - self.ema_rate) * self.loss_ema
-        # update T_cur and weights
+#     def update_with_local_losses(self, losses):
+#         # update loss
+#         self.loss_cur = losses.mean().squeeze()
+#         self.loss_ema = self.ema_rate * self.loss_cur + (1 - self.ema_rate) * self.loss_ema
+#         # update T_cur and weights
         
-        # Discriminator가 잘하면 (ACC 기준) T_cur을 증가
-        if self.loss_ema > self.loss_target: 
-            self.T_cur = min(self.T_cur + self.T_step, self.T_max)
-        # Discriminator가 못하면 (ACC 기준) T_cur을 감소
-        else: 
-            self.T_cur = max(self.T_cur - self.T_step, self.T_min)
-        self._weights = self.get_weights()
-        return self.T_cur
+#         # Discriminator가 잘하면 (ACC 기준) T_cur을 증가
+#         if self.loss_ema > self.loss_target: 
+#             self.T_cur = min(self.T_cur + self.T_step, self.T_max)
+#         # Discriminator가 못하면 (ACC 기준) T_cur을 감소
+#         else: 
+#             self.T_cur = max(self.T_cur - self.T_step, self.T_min)
+#         self._weights = self.get_weights()
+#         return self.T_cur
 
 class LossAwareSampler(ScheduleSampler):
     def update_with_local_losses(self, local_ts, local_losses):

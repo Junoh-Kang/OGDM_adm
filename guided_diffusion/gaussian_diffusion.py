@@ -934,8 +934,7 @@ class GaussianDiffusion:
         """
         assert self.loss_type == LossType.MSE or self.loss_type == LossType.RESCALED_MSE
         assert self.model_var_type not in [ModelVarType.LEARNED, ModelVarType.LEARNED_RANGE,]
-        if discriminator:
-            x_start.requires_grad = True
+        
         if model_kwargs is None:
             model_kwargs = {}
         if noise is None:
@@ -975,6 +974,7 @@ class GaussianDiffusion:
                     real = self.ddim_step(x_t, x_start, t)
                     fake = self.ddim_step(x_t, x_start_hat, t)
                 t_cond = t.unsqueeze(dim=1)
+                real.requires_grad = True
             
             # Discriminator loss
             d_real_pred = discriminator(real, cond, t_cond).squeeze()

@@ -16,7 +16,7 @@ import torchvision
 from . import dist_util, logger
 from .fp16_util import MixedPrecisionTrainer
 from .nn import update_ema
-from .resample import LossAwareSampler, UniformSampler, DiscAwareResampler
+from .resample import LossAwareSampler, UniformSampler#, DiscAwareResampler
 
 # For ImageNet experiments, this was a good default value.
 # We found that the lg_loss_scale quickly climbed to
@@ -287,7 +287,7 @@ class TrainLoop:
                 lossD = losses["lossD"] + self.grad_weight / 2 * losses["grad_penalty"]
                 losses["Discrimination"] = lossD
                 self.mp_trainer_disc.backward(lossD.mean())
-                self.mp_trainer_model.optimize(self.opt_model)
+                self.mp_trainer_disc.optimize(self.opt_disc)
             # log losses
             wandb.log({f"Train/Samples": 
                         (self.step + self.resume_step + 1) * self.global_batch},
@@ -302,11 +302,11 @@ class TrainLoop:
                 self.schedule_sampler.update_with_local_losses(
                     t, losses["lossDM"].detach()
                 )
-            elif isinstance(self.schedule_sampler, DiscAwareResampler):
-                T_cur = self.schedule_sampler.update_with_local_losses(
-                    losses["fake_acc"].detach()
-                )
-                wandb.log({"Train/T_cur": T_cur}, step=self.step)
+            # elif isinstance(self.schedule_sampler, DiscAwareResampler):
+            #     T_cur = self.schedule_sampler.update_with_local_losses(
+            #         losses["fake_acc"].detach()
+            #     )
+            #     wandb.log({"Train/T_cur": T_cur}, step=self.step)
 
     def _update_ema(self):
         for rate, params in zip(self.ema_rate, self.ema_params):
