@@ -79,19 +79,19 @@ class UniformSampler(ScheduleSampler):
         return self._weights
 
 class DiscAwareResampler(ScheduleSampler):
-    def __init__(self, diffusion, sample_type="uniform", loss_target=0.7, ema_rate=0.9):        
+    def __init__(self, diffusion, sample_type="uniform", loss_target=0.7):        
         
         # self.diffusion = diffusion
         self.T_max = diffusion.num_timesteps
         self.T_min = self.T_max // 100
         self.T_step = self.T_max // 100
-        self.T_cur = self.T_min
+        self.T_cur = self.T_max
         
         self.loss_target = loss_target
         self.loss_cur = 0
         self.loss_ema = 0
         
-        self.ema_rate = ema_rate
+        self.ema_rate = 0.9
 
         self.sample_type = sample_type
         self._weights = self.get_weights()
@@ -101,9 +101,9 @@ class DiscAwareResampler(ScheduleSampler):
 
     def get_weights(self):
         if self.sample_type == "uniform":
-            return np.concatenate((np.ones(self.T_cur), np.zeros(self.T_max-self.T_cur)))
+            return np.concatenate((np.ones(self.T_cur), np.zeros(self.T_max-self.T_cur)))[::-1]
         elif self.sample_type == "priority":
-            return np.concatenate((np.arange(self.T_cur), np.zeros(self.T_max-self.T_cur)))
+            return np.concatenate((np.arange(self.T_cur), np.zeros(self.T_max-self.T_cur)))[::-1]
 
     def update_with_local_losses(self, losses):
         # update loss
