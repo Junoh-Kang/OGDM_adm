@@ -304,7 +304,7 @@ class TrainLoop:
                 )
             elif isinstance(self.schedule_sampler, DiscAwareResampler):
                 T_cur = self.schedule_sampler.update_with_local_losses(
-                    losses["real_acc"].detach()
+                    losses["fake_acc"].detach()
                 )
                 wandb.log({"Train/T_cur": T_cur}, step=self.step)
 
