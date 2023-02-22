@@ -12,22 +12,15 @@ def create_named_schedule_sampler(name, diffusion):
     :param name: the name of the sampler.
     :param diffusion: the diffusion object to sample for.
     """
+
     if name == "uniform":
         return UniformSampler(diffusion)
     elif name == "loss_aware":
         return LossSecondMomentResampler(diffusion)
-    elif name.startswith("disc_aware_uniform"):
-        try: 
-            end = name.split(":")[1] + ")"
-        except:
-            end = ")"
-        return eval("DiscAwareResampler(diffusion, sample_type='uniform'," + end)
-    elif name.startswith("disc_aware_priority"):
-        try: 
-            end = name.split(":")[1] + ")"
-        except:
-            end = ")"
-        return eval("DiscAwareResampler(diffusion, sample_type='priority'," + end)
+    elif name.startswith("disc_aware"):
+        return eval( 
+            "DiscAwareResampler(diffusion," + ",".join(name.split(",")[1:]) + ")"
+        )
     else:
         raise NotImplementedError(f"unknown schedule sampler: {name}")
 
@@ -79,7 +72,7 @@ class UniformSampler(ScheduleSampler):
         return self._weights
 
 class DiscAwareResampler(ScheduleSampler):
-    def __init__(self, diffusion, sample_type="uniform", loss_target=0.7):        
+    def __init__(self, diffusion, sample_type="uniform", loss_target=0.7, ):        
         
         # self.diffusion = diffusion
         self.T_max = diffusion.num_timesteps
@@ -110,9 +103,12 @@ class DiscAwareResampler(ScheduleSampler):
         self.loss_cur = losses.mean().squeeze()
         self.loss_ema = self.ema_rate * self.loss_cur + (1 - self.ema_rate) * self.loss_ema
         # update T_cur and weights
-        if self.loss_ema > self.loss_target:
+        
+        # Discriminator가 잘하면 (ACC 기준) T_cur을 증가
+        if self.loss_ema > self.loss_target: 
             self.T_cur = min(self.T_cur + self.T_step, self.T_max)
-        else:
+        # Discriminator가 못하면 (ACC 기준) T_cur을 감소
+        else: 
             self.T_cur = max(self.T_cur - self.T_step, self.T_min)
         self._weights = self.get_weights()
         return self.T_cur

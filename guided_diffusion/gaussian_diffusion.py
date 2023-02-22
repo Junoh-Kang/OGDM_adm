@@ -888,7 +888,6 @@ class GaussianDiffusion:
         terms["lossDM"] = mean_flat((target - model_output) ** 2)
         
         if discriminator:
-
             x_start_hat = {
                 ModelMeanType.PREVIOUS_X: 
                     self._predict_xstart_from_xprev(x_t, t, model_output),
@@ -972,8 +971,9 @@ class GaussianDiffusion:
                 fake = x_start_hat
                 t_cond = None
             else:
-                real = self.ddim_step(x_t, x_start, t)
-                fake = self.ddim_step(x_t, x_start_hat, t)
+                with th.no_grad():
+                    real = self.ddim_step(x_t, x_start, t)
+                    fake = self.ddim_step(x_t, x_start_hat, t)
                 t_cond = t.unsqueeze(dim=1)
             
             # Discriminator loss

@@ -220,19 +220,16 @@ class TrainLoop:
 
     def run_step(self, batch, cond):
         self.forward_backward(batch, cond)
-        took_step = self.mp_trainer_model.optimize(self.opt_model)
-        if self.ddp_discriminator:
-            took_step = took_step and self.mp_trainer_disc.optimize(self.opt_disc)
-        if took_step:
-            self._update_ema()
+        # took_step = self.mp_trainer_model.optimize(self.opt_model)
+        # if self.ddp_discriminator:
+        #     took_step = took_step and self.mp_trainer_disc.optimize(self.opt_disc)
+        # if took_step:
+        #     self._update_ema()
+        self._update_ema()
         self._anneal_lr()
         # self.log_step()
 
     def forward_backward(self, batch, cond):
-
-        self.mp_trainer_model.zero_grad()
-        if self.ddp_discriminator:
-            self.mp_trainer_disc.zero_grad()
 
         for i in range(0, batch.shape[0], self.microbatch):
             micro = batch[i : i + self.microbatch].to(dist_util.dev())
@@ -244,6 +241,7 @@ class TrainLoop:
             t, weights = self.schedule_sampler.sample(micro.shape[0], dist_util.dev())
 
             # compute Generation loss and backward
+            self.mp_trainer_model.zero_grad()
             compute_losses_G = functools.partial(
                 self.diffusion.training_losses_G,
                 self.ddp_model,
@@ -266,9 +264,11 @@ class TrainLoop:
                 lossG = losses["lossDM"] * weights
             
             self.mp_trainer_model.backward(lossG.mean())
+            self.mp_trainer_model.optimize(self.opt_model)
             
             # compute Discrimination loss and backward
             if self.ddp_discriminator:
+                self.mp_trainer_disc.zero_grad()
                 compute_losses_D = functools.partial(
                     self.diffusion.training_losses_D,
                     self.ddp_model,
@@ -287,7 +287,7 @@ class TrainLoop:
                 lossD = losses["lossD"] + self.grad_weight / 2 * losses["grad_penalty"]
                 losses["Discrimination"] = lossD
                 self.mp_trainer_disc.backward(lossD.mean())
-            
+                self.mp_trainer_model.optimize(self.opt_model)
             # log losses
             wandb.log({f"Train/Samples": 
                         (self.step + self.resume_step + 1) * self.global_batch},
