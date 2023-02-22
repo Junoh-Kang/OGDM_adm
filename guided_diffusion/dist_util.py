@@ -5,6 +5,7 @@ Helpers for distributed training.
 import io
 import os
 import socket
+import subprocess as sp
 
 import blobfile as bf
 from mpi4py import MPI
@@ -17,15 +18,24 @@ GPUS_PER_NODE = 4
 
 SETUP_RETRY_COUNT = 3
 
+def get_gpu_memory():
+    command = "nvidia-smi --query-gpu=memory.free --format=csv"
+    memory_free_info = sp.check_output(command.split()).decode('ascii').split('\n')[:-1][1:]
+    memory_free_values = [int(x.split()[0]) for i, x in enumerate(memory_free_info)]
+    return memory_free_values
 
-def setup_dist():
+def setup_dist(sampling=True):
     """
     Setup a distributed process group.
     """
     if dist.is_initialized():
         return
-    os.environ["CUDA_VISIBLE_DEVICES"] = f"{MPI.COMM_WORLD.Get_rank() % GPUS_PER_NODE}"
-
+    if not sampling:
+        os.environ["CUDA_VISIBLE_DEVICES"] = f"{MPI.COMM_WORLD.Get_rank() % GPUS_PER_NODE}"
+    else:
+        gpu_id = th.argmax(th.tensor(get_gpu_memory()))
+        os.environ["CUDA_VISIBLE_DEVICES"] = f"{gpu_id % GPUS_PER_NODE}"
+    # breakpoint()
     comm = MPI.COMM_WORLD
     backend = "gloo" if not th.cuda.is_available() else "nccl"
 
@@ -33,14 +43,38 @@ def setup_dist():
         hostname = "localhost"
     else:
         hostname = socket.gethostbyname(socket.getfqdn())
-    
-    os.environ["MASTER_ADDR"] = comm.bcast(hostname, root=0)
+    # os.environ["MASTER_ADDR"] = comm.bcast(hostname, root=0)
+    os.environ["MASTER_ADDR"] = '127.0.0.1'
     os.environ["RANK"] = str(comm.rank)
     os.environ["WORLD_SIZE"] = str(comm.size)
 
     port = comm.bcast(_find_free_port(), root=0)
     os.environ["MASTER_PORT"] = str(port)
     dist.init_process_group(backend=backend, init_method="env://")
+
+# def setup_dist():
+#     """
+#     Setup a distributed process group.
+#     """
+#     if dist.is_initialized():
+#         return
+#     os.environ["CUDA_VISIBLE_DEVICES"] = f"{MPI.COMM_WORLD.Get_rank() % GPUS_PER_NODE}"
+
+#     comm = MPI.COMM_WORLD
+#     backend = "gloo" if not th.cuda.is_available() else "nccl"
+
+#     if backend == "gloo":
+#         hostname = "localhost"
+#     else:
+#         hostname = socket.gethostbyname(socket.getfqdn())
+    
+#     os.environ["MASTER_ADDR"] = comm.bcast(hostname, root=0)
+#     os.environ["RANK"] = str(comm.rank)
+#     os.environ["WORLD_SIZE"] = str(comm.size)
+
+#     port = comm.bcast(_find_free_port(), root=0)
+#     os.environ["MASTER_PORT"] = str(port)
+#     dist.init_process_group(backend=backend, init_method="env://")
 
 
 def dev():

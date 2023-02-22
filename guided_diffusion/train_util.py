@@ -242,6 +242,9 @@ class TrainLoop:
 
             # compute Generation loss and backward
             self.mp_trainer_model.zero_grad()
+            # print("\n Model Zero Grad")
+            # print(self.mp_trainer_model._compute_norms(), self.mp_trainer_disc._compute_norms())
+
             compute_losses_G = functools.partial(
                 self.diffusion.training_losses_G,
                 self.ddp_model,
@@ -264,11 +267,20 @@ class TrainLoop:
                 lossG = losses["lossDM"] * weights
             
             self.mp_trainer_model.backward(lossG.mean())
-            self.mp_trainer_model.optimize(self.opt_model)
+            # print("\n Model Backward")
+            # print(self.mp_trainer_model._compute_norms(), self.mp_trainer_disc._compute_norms())
             
+            self.mp_trainer_model.optimize(self.opt_model)
+            # print("\n Model Optimize")
+            # print(self.mp_trainer_model._compute_norms(), self.mp_trainer_disc._compute_norms())
+
             # compute Discrimination loss and backward
             if self.ddp_discriminator:
+
                 self.mp_trainer_disc.zero_grad()
+                # print("\n Disc Zero Grad")
+                # print(self.mp_trainer_model._compute_norms(), self.mp_trainer_disc._compute_norms())
+
                 compute_losses_D = functools.partial(
                     self.diffusion.training_losses_D,
                     self.ddp_model,
@@ -286,16 +298,26 @@ class TrainLoop:
                 
                 lossD = losses["lossD"] + self.grad_weight / 2 * losses["grad_penalty"]
                 losses["Discrimination"] = lossD
+                
                 self.mp_trainer_disc.backward(lossD.mean())
+                # print("\n Disc Backward")
+                # print(self.mp_trainer_model._compute_norms(), self.mp_trainer_disc._compute_norms())
+                
                 self.mp_trainer_disc.optimize(self.opt_disc)
+                # print("\n Disc Optimize")
+                # print(self.mp_trainer_model._compute_norms(), self.mp_trainer_disc._compute_norms())
+                # print("")
+                # breakpoint()
+                
             # log losses
-            wandb.log({f"Train/Samples": 
+            if dist.get_rank() == 0:
+                wandb.log({f"Train/Samples": 
                         (self.step + self.resume_step + 1) * self.global_batch},
                         step=self.step)
-            log_loss_dict(
-                self.step,
-                self.diffusion, t, {k: v * weights for k, v in losses.items()}
-            )
+                log_loss_dict(
+                    self.step,
+                    self.diffusion, t, {k: v * weights for k, v in losses.items()}
+                )
             
             # update sampler        
             if isinstance(self.schedule_sampler, LossAwareSampler):
@@ -461,7 +483,6 @@ def find_ema_checkpoint(main_checkpoint, step, rate):
     return None
 
 def log_loss_dict(step, diffusion, ts, losses):
-
     train_key = [key for key in losses.keys() if key in \
         ["Generation", "lossDM", "lossG", "Discrimination", "lossD", "grad_penalty"]]
     supple_key = [key for key in losses.keys() if key in \

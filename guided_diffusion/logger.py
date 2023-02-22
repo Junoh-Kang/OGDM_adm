@@ -462,7 +462,7 @@ def configure(dir='./logs', project='', exp='', config=None,
     with open(osp.join(dir, 'config.yaml'), 'w') as f:
         yaml.dump(config, f, default_flow_style=False)
 
-    if dist.get_rank() == 0: 
+    if dist.get_rank() == 0:
         wandb.init(dir=dir, config=config,
                 entity="lgai", project="adm_"+project, name=exp_name, 
                 )

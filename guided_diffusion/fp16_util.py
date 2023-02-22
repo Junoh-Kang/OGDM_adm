@@ -173,7 +173,7 @@ class MixedPrecisionTrainer:
     def zero_grad(self):
         zero_grad(self.model_params)
 
-    def backward(self, loss: th.Tensor):
+    def backward(self, loss: th.Tensor,):
         if self.use_fp16:
             loss_scale = 2 ** self.lg_loss_scale
             (loss * loss_scale).backward()

@@ -966,15 +966,16 @@ class GaussianDiffusion:
             # Set Discriminator target
             cond = None                        
             if discriminator.module.t_dim == 0:
-                real = x_start
-                fake = x_start_hat
+                with th.no_grad():
+                    real = x_start
+                    fake = x_start_hat
                 t_cond = None
             else:
                 with th.no_grad():
                     real = self.ddim_step(x_t, x_start, t)
                     fake = self.ddim_step(x_t, x_start_hat, t)
                 t_cond = t.unsqueeze(dim=1)
-                real.requires_grad = True
+            real.requires_grad = True
             
             # Discriminator loss
             d_real_pred = discriminator(real, cond, t_cond).squeeze()
