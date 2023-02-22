@@ -24,17 +24,18 @@ def get_gpu_memory():
     memory_free_values = [int(x.split()[0]) for i, x in enumerate(memory_free_info)]
     return memory_free_values
 
-def setup_dist(sampling=True):
+def setup_dist():
     """
     Setup a distributed process group.
     """
     if dist.is_initialized():
         return
-    if not sampling:
-        os.environ["CUDA_VISIBLE_DEVICES"] = f"{MPI.COMM_WORLD.Get_rank() % GPUS_PER_NODE}"
-    else:
-        gpu_id = th.argmax(th.tensor(get_gpu_memory()))
-        os.environ["CUDA_VISIBLE_DEVICES"] = f"{gpu_id % GPUS_PER_NODE}"
+    os.environ["CUDA_VISIBLE_DEVICES"] = f"{MPI.COMM_WORLD.Get_rank() % GPUS_PER_NODE}"
+    # if not sampling:
+    #     os.environ["CUDA_VISIBLE_DEVICES"] = f"{MPI.COMM_WORLD.Get_rank() % GPUS_PER_NODE}"
+    # else:
+    #     gpu_id = th.argmax(th.tensor(get_gpu_memory()))
+    #     os.environ["CUDA_VISIBLE_DEVICES"] = f"{gpu_id % GPUS_PER_NODE}"
     # breakpoint()
     comm = MPI.COMM_WORLD
     backend = "gloo" if not th.cuda.is_available() else "nccl"
