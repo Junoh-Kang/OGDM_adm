@@ -591,7 +591,6 @@ class GaussianDiffusion:
         x_t,
         x_start,
         t,
-        # eta=0.0,
     ):
         """
         Sample x_{t-1} from the model using DDIM.
