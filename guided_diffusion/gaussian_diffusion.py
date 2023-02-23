@@ -850,7 +850,7 @@ class GaussianDiffusion:
         return terms
 
     def training_losses_G(self, model, discriminator,
-                          x_start, t, model_kwargs=None, noise=None, lossD_type="hinge"):
+                          x_start, t, s, model_kwargs=None, noise=None, lossD_type="hinge"):
         """
         Compute training losses for a single timestep.
 
@@ -871,7 +871,7 @@ class GaussianDiffusion:
         if noise is None:
             noise = th.randn_like(x_start)
         x_t = self.q_sample(x_start, t, noise=noise)
-
+        
         terms = {}
         
         model_output = model(x_t, self._scale_timesteps(t), **model_kwargs)
@@ -882,7 +882,7 @@ class GaussianDiffusion:
             ModelMeanType.START_X: x_start,
             ModelMeanType.EPSILON: noise,
         }[self.model_mean_type]
-
+        
         assert model_output.shape == target.shape == x_start.shape
 
         terms["lossDM"] = mean_flat((target - model_output) ** 2)
@@ -897,13 +897,11 @@ class GaussianDiffusion:
             }[self.model_mean_type]
             
             cond = None
-            breakpoint()
-            t_cond = t.unsqueeze(dim=1)
-            s_cond = s.unsqueeze(dim=1)
+            ts_cond = th.cat((t.unsqueeze(dim=1), s.unsqueeze(dim=1)), dim=1)
             fake = self.ddim_step(x_t, x_start_hat, t, s)
 
             # Generation loss
-            fake_pred = discriminator(fake, cond, t_cond, s_cond).squeeze()
+            fake_pred = discriminator(fake, cond, ts_cond).squeeze()
             if lossD_type == "logistic":
                 lossG = F.softplus(-fake_pred)
             elif lossD_type == "hinge":
@@ -915,7 +913,7 @@ class GaussianDiffusion:
         return terms
 
     def training_losses_D(self, model, discriminator,
-                           x_start, t, model_kwargs=None, noise=None, lossD_type=""):
+                           x_start, t, s, model_kwargs=None, noise=None, lossD_type=""):
         """
         Compute training losses for a single timestep.
 
@@ -961,16 +959,15 @@ class GaussianDiffusion:
             
             # Set Discriminator target
             cond = None
-            t_cond = t.unsqueeze(dim=1)
-            s_cond = s.unsqueeze(dim=1)
+            ts_cond = th.cat((t.unsqueeze(dim=1), s.unsqueeze(dim=1)), dim=1)
             with th.no_grad():
                 real = self.ddim_step(x_t, x_start, t, s)
                 fake = self.ddim_step(x_t, x_start_hat, t, s)
             real.requires_grad = True
             
             # Discriminator loss
-            d_real_pred = discriminator(real, cond, t_cond, s_cond).squeeze()
-            d_fake_pred = discriminator(fake, cond, t_cond, s_cond).squeeze()
+            d_real_pred = discriminator(real, cond, ts_cond).squeeze()
+            d_fake_pred = discriminator(fake, cond, ts_cond).squeeze()
             
             if lossD_type == "logistic":
                 lossD = F.softplus(-d_real_pred) + F.softplus(d_fake_pred)

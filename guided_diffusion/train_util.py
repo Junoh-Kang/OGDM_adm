@@ -16,7 +16,7 @@ import torchvision
 from . import dist_util, logger
 from .fp16_util import MixedPrecisionTrainer
 from .nn import update_ema
-from .resample import LossAwareSampler, UniformSampler#, DiscAwareResampler
+from .resample import LossAwareSampler, UniformSampler, PairSampler
 
 # For ImageNet experiments, this was a good default value.
 # We found that the lg_loss_scale quickly climbed to
@@ -238,19 +238,22 @@ class TrainLoop:
                 for k, v in cond.items()
             }
             last_batch = (i + self.microbatch) >= batch.shape[0]
-            t, weights = self.schedule_sampler.sample(micro.shape[0], dist_util.dev())
-
+            if isinstance(self.schedule_sampler, PairSampler):
+                t, weights, s = self.schedule_sampler.sample(micro.shape[0], dist_util.dev())
+            else:
+                t, weights = self.schedule_sampler.sample(micro.shape[0], dist_util.dev())
+                s = t
+            
             # compute Generation loss and backward
             self.mp_trainer_model.zero_grad()
-            # print("\n Model Zero Grad")
-            # print(self.mp_trainer_model._compute_norms(), self.mp_trainer_disc._compute_norms())
-
+            
             compute_losses_G = functools.partial(
                 self.diffusion.training_losses_G,
                 self.ddp_model,
                 self.ddp_discriminator,
                 micro,
                 t,
+                s,
                 model_kwargs=micro_cond,
                 lossD_type=self.lossD_type
             )  
@@ -287,6 +290,7 @@ class TrainLoop:
                     self.ddp_discriminator,
                     micro,
                     t,
+                    s,
                     model_kwargs=micro_cond,
                     lossD_type=self.lossD_type
                 )

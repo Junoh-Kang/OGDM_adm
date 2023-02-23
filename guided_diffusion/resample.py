@@ -17,7 +17,7 @@ def create_named_schedule_sampler(name, diffusion):
         return UniformSampler(diffusion)
     elif name == "loss_aware":
         return LossSecondMomentResampler(diffusion)
-    elif name == "pair_sampler":
+    elif name == "pair":
         return PairSampler(diffusion)
     # elif name.startswith("disc_aware"):
     #     return eval( 
@@ -89,7 +89,7 @@ class PairSampler():
         sampler = _UniformSampler(self.diffusion.num_timesteps)
         ts, weights = sampler.sample(batch_size, device)
         s = []
-        for t in ts.numpy():
+        for t in ts.cpu().numpy():
             tmp, _ = _UniformSampler(t+1).sample(1, device)
             s.append(tmp)
         s = th.cat(s).long().to(device)
