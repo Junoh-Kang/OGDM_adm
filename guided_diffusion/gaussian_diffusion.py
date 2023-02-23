@@ -598,8 +598,8 @@ class GaussianDiffusion:
         inputs are x_t and x_start
         """
         eps = self._predict_eps_from_xstart(x_t, t, x_start)
-        alpha_bar = _extract_into_tensor(self.alphas_cumprod, t, x_t.shape)
-        alpha_bar_prev = _extract_into_tensor(self.alphas_cumprod_prev, t-s, x_t.shape)
+        alpha_bar = _extract_into_tensor(self.alphas_cumprod, t, x_t.shape)                  # alphabar_t+1
+        alpha_bar_prev = _extract_into_tensor(self.alphas_cumprod_prev, t-s, x_t.shape)          # alphabar_t-s s = 0 ~ t-1
         # sigma = (
         #     eta
         #     * th.sqrt((1 - alpha_bar_prev) / (1 - alpha_bar))
@@ -897,7 +897,7 @@ class GaussianDiffusion:
             }[self.model_mean_type]
             
             cond = None
-            
+            breakpoint()
             t_cond = t.unsqueeze(dim=1)
             s_cond = s.unsqueeze(dim=1)
             fake = self.ddim_step(x_t, x_start_hat, t, s)

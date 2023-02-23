@@ -17,6 +17,8 @@ def create_named_schedule_sampler(name, diffusion):
         return UniformSampler(diffusion)
     elif name == "loss_aware":
         return LossSecondMomentResampler(diffusion)
+    elif name == "pair_sampler":
+        return PairSampler(diffusion)
     # elif name.startswith("disc_aware"):
     #     return eval( 
     #         "DiscAwareResampler(diffusion," + ",".join(name.split(",")[1:]) + ")"
@@ -70,6 +72,28 @@ class UniformSampler(ScheduleSampler):
 
     def weights(self):
         return self._weights
+
+class _UniformSampler(ScheduleSampler):
+    def __init__(self, T):
+        self.T = T
+        self._weights = np.ones([T])
+
+    def weights(self):
+        return self._weights
+
+class PairSampler():
+    def __init__(self, diffusion):
+        self.diffusion = diffusion
+
+    def sample(self, batch_size, device):
+        sampler = _UniformSampler(self.diffusion.num_timesteps)
+        ts, weights = sampler.sample(batch_size, device)
+        s = []
+        for t in ts.numpy():
+            tmp, _ = _UniformSampler(t+1).sample(1, device)
+            s.append(tmp)
+        s = th.cat(s).long().to(device)
+        return ts, weights, s
 
 # class DiscAwareResampler(ScheduleSampler):
 #     def __init__(self, diffusion, sample_type="uniform", 
