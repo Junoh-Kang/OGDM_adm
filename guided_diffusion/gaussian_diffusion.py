@@ -591,14 +591,15 @@ class GaussianDiffusion:
         x_t,
         x_start,
         t,
+        s,
     ):
         """
-        Sample x_{t-1} from the model using DDIM.
+        Sample x_{t-s} from the model using DDIM.
         inputs are x_t and x_start
         """
         eps = self._predict_eps_from_xstart(x_t, t, x_start)
         alpha_bar = _extract_into_tensor(self.alphas_cumprod, t, x_t.shape)
-        alpha_bar_prev = _extract_into_tensor(self.alphas_cumprod_prev, t, x_t.shape)
+        alpha_bar_prev = _extract_into_tensor(self.alphas_cumprod_prev, t-s, x_t.shape)
         # sigma = (
         #     eta
         #     * th.sqrt((1 - alpha_bar_prev) / (1 - alpha_bar))
@@ -895,18 +896,14 @@ class GaussianDiffusion:
                     self._predict_xstart_from_eps(x_t, t, model_output) 
             }[self.model_mean_type]
             
-            cond = None                        
-            if discriminator.module.t_dim == 0:
-                real = x_start
-                fake = x_start_hat
-                t_cond = None
-            else:
-                # real = self.ddim_step(x_t, x_start, t)
-                fake = self.ddim_step(x_t, x_start_hat, t)
-                t_cond = t.unsqueeze(dim=1)
+            cond = None
+            
+            t_cond = t.unsqueeze(dim=1)
+            s_cond = s.unsqueeze(dim=1)
+            fake = self.ddim_step(x_t, x_start_hat, t, s)
 
             # Generation loss
-            fake_pred = discriminator(fake, cond, t_cond).squeeze()
+            fake_pred = discriminator(fake, cond, t_cond, s_cond).squeeze()
             if lossD_type == "logistic":
                 lossG = F.softplus(-fake_pred)
             elif lossD_type == "hinge":
@@ -963,22 +960,17 @@ class GaussianDiffusion:
             }[self.model_mean_type]
             
             # Set Discriminator target
-            cond = None                        
-            if discriminator.module.t_dim == 0:
-                with th.no_grad():
-                    real = x_start
-                    fake = x_start_hat
-                t_cond = None
-            else:
-                with th.no_grad():
-                    real = self.ddim_step(x_t, x_start, t)
-                    fake = self.ddim_step(x_t, x_start_hat, t)
-                t_cond = t.unsqueeze(dim=1)
+            cond = None
+            t_cond = t.unsqueeze(dim=1)
+            s_cond = s.unsqueeze(dim=1)
+            with th.no_grad():
+                real = self.ddim_step(x_t, x_start, t, s)
+                fake = self.ddim_step(x_t, x_start_hat, t, s)
             real.requires_grad = True
             
             # Discriminator loss
-            d_real_pred = discriminator(real, cond, t_cond).squeeze()
-            d_fake_pred = discriminator(fake, cond, t_cond).squeeze()
+            d_real_pred = discriminator(real, cond, t_cond, s_cond).squeeze()
+            d_fake_pred = discriminator(fake, cond, t_cond, s_cond).squeeze()
             
             if lossD_type == "logistic":
                 lossD = F.softplus(-d_real_pred) + F.softplus(d_fake_pred)
