@@ -44,8 +44,8 @@ def setup_dist():
         hostname = "localhost"
     else:
         hostname = socket.gethostbyname(socket.getfqdn())
-    # os.environ["MASTER_ADDR"] = comm.bcast(hostname, root=0)
-    os.environ["MASTER_ADDR"] = '127.0.0.1'
+    os.environ["MASTER_ADDR"] = comm.bcast(hostname, root=0)
+    # os.environ["MASTER_ADDR"] = '127.0.0.1'
     os.environ["RANK"] = str(comm.rank)
     os.environ["WORLD_SIZE"] = str(comm.size)
 
@@ -109,7 +109,6 @@ def load_state_dict(path, **kwargs):
 
     return th.load(io.BytesIO(data), **kwargs)
 
-
 def sync_params(params):
     """
     Synchronize a sequence of Tensors across ranks from rank 0.
@@ -117,7 +116,6 @@ def sync_params(params):
     for p in params:
         with th.no_grad():
             dist.broadcast(p, 0)
-
 
 def _find_free_port():
     try:

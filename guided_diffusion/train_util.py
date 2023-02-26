@@ -163,7 +163,6 @@ class TrainLoop:
                         resume_checkpoint, map_location=dist_util.dev()
                     )
                 )
-
         dist_util.sync_params(self.model.parameters())
 
     def _load_ema_parameters(self, rate):
@@ -389,16 +388,18 @@ class TrainLoop:
         return th.cat(all_images)
     
     def sample_and_save(self, size, sample_num=64):
-        
         grid_row = min(max(int(sample_num**0.5),4),sample_num)
         for sample_type in self.sample_type:
             #sample function
             self.diffusion_kwargs['timestep_respacing'] = sample_type
-            if sample_type.startswith("ddim"):
-                sample_fn = create_gaussian_diffusion(**self.diffusion_kwargs).ddim_sample_loop
+            try:
+                if sample_type.startswith("ddim"):
+                    sample_fn = create_gaussian_diffusion(**self.diffusion_kwargs).ddim_sample_loop
+                else:
+                    sample_type = "ddpm" + str(sample_type)
+                    sample_fn = create_gaussian_diffusion(**self.diffusion_kwargs).p_sample_loop
             else:
-                sample_type = "ddpm" + str(sample_type)
-                sample_fn = create_gaussian_diffusion(**self.diffusion_kwargs).p_sample_loop
+                continue
             #sample
             sample = self.sample(sample_fn=sample_fn, model=self.ddp_model, 
                                  sample_num=sample_num, size=size)
@@ -410,7 +411,30 @@ class TrainLoop:
                     Image.fromarray(sample).save(f)
                 wandb.log({f"{sample_type}_model": wandb.Image(sample)})
             
-    def sample_and_fid(self, size):
+    def sample_and_fid(self, size, sample_fid_num=1000):
+        # for sample_type in self.sample_type:
+        #     #sample function
+        #     self.diffusion_kwargs['timestep_respacing'] = sample_type
+        #     if sample_type.startswith("ddim"):
+        #         sample_fn = create_gaussian_diffusion(**self.diffusion_kwargs).ddim_sample_loop
+        #     else:
+        #         sample_type = "ddpm" + str(sample_type)
+        #         sample_fn = create_gaussian_diffusion(**self.diffusion_kwargs).p_sample_loop
+        #     sampled = 0
+        #     while sampled < sample_fid_num:
+
+
+        #     #sample
+            
+        #     sample = self.sample(sample_fn=sample_fn, model=self.ddp_model, 
+        #                          sample_num=sample_num, size=size)
+        #     sample = sample.permute(1,2,0).numpy()
+        #     # save        
+        #     if dist.get_rank() == 0:
+        #         filename = f"samples/model_{sample_type}_{(self.step+self.resume_step):06d}.png"
+        #         with bf.BlobFile(bf.join(get_blob_logdir(), filename), "wb") as f:
+        #             Image.fromarray(sample).save(f)
+        #         wandb.log({f"{sample_type}_model": wandb.Image(sample)})
         return
 
 def parse_resume_step_from_filename(filename):
