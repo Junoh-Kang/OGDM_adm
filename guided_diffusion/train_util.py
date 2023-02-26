@@ -40,7 +40,7 @@ class TrainLoop:
         lossD_type,
         grad_weight,
         ema_rate,
-        # log_interval,
+        log_interval,
         save_interval,
         sample_type,
         sample_num,
@@ -70,7 +70,7 @@ class TrainLoop:
             if isinstance(ema_rate, float)
             else [float(x) for x in ema_rate.split(",")]
         )
-        # self.log_interval = log_interval
+        self.log_interval = log_interval
         self.save_interval = save_interval
         self.sample_type = sample_type
         self.sample_num = sample_num
@@ -201,13 +201,12 @@ class TrainLoop:
         ):
             batch, cond = next(self.data)
             self.run_step(batch, cond)
-            # if self.step % self.log_interval == 0:
-            #     logger.dumpkvs()
-            if (self.step % self.save_interval == 0) and self.step > 0:
+            if self.step % self.log_interval == 0:
                 self.log_step()
                 logger.dumpkvs()
-                self.save()
                 self.sample_and_save(batch.shape, sample_num=self.sample_num)
+            if (self.step % self.save_interval == 0) and self.step > 0:
+                self.save()
                 # self.sample_and_cal_fid(num_samples, batch.shape)        
                 # Run for a finite amount of time in integration tests.
                 if os.environ.get("DIFFUSION_TRAINING_TEST", "") and self.step > 0:

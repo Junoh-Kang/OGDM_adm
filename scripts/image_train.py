@@ -69,7 +69,7 @@ def main():
         lossD_type=args.lossD_type,
         grad_weight=args.grad_weight,
         ema_rate=args.ema_rate,
-        # log_interval=args.log_interval,
+        log_interval=args.log_interval,
         save_interval=args.save_interval,
         sample_type=args.sample_type,
         sample_num=args.sample_num,
