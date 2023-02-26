@@ -873,7 +873,7 @@ class GaussianDiffusion:
         x_t = self.q_sample(x_start, t, noise=noise)
         
         terms = {}
-        
+
         model_output = model(x_t, self._scale_timesteps(t), **model_kwargs)
 
         target = {
@@ -897,11 +897,14 @@ class GaussianDiffusion:
             }[self.model_mean_type]
             
             cond = None
-            ts_cond = th.cat((t.unsqueeze(dim=1), s.unsqueeze(dim=1)), dim=1)
+            if discriminator.module.t_dim == 1:    
+                time_cond = (t-s).unsqueeze(dim=1) 
+            elif discriminator.module.t_dim == 2:
+                time_cond = th.cat((t.unsqueeze(dim=1), s.unsqueeze(dim=1)), dim=1)
             fake = self.ddim_step(x_t, x_start_hat, t, s)
 
             # Generation loss
-            fake_pred = discriminator(fake, cond, ts_cond).squeeze()
+            fake_pred = discriminator(fake, cond, time_cond).squeeze()
             if lossD_type == "logistic":
                 lossG = F.softplus(-fake_pred)
             elif lossD_type == "hinge":
@@ -936,7 +939,6 @@ class GaussianDiffusion:
         x_t = self.q_sample(x_start, t, noise=noise)
 
         terms = {}
-        
         model_output = model(x_t, self._scale_timesteps(t), **model_kwargs)
 
         target = {
@@ -959,15 +961,18 @@ class GaussianDiffusion:
             
             # Set Discriminator target
             cond = None
-            ts_cond = th.cat((t.unsqueeze(dim=1), s.unsqueeze(dim=1)), dim=1)
+            if discriminator.module.t_dim == 1:    
+                time_cond = (t-s).unsqueeze(dim=1)
+            elif discriminator.module.t_dim == 2:
+                time_cond = th.cat((t.unsqueeze(dim=1), s.unsqueeze(dim=1)), dim=1)
             with th.no_grad():
                 real = self.ddim_step(x_t, x_start, t, s)
                 fake = self.ddim_step(x_t, x_start_hat, t, s)
             real.requires_grad = True
             
             # Discriminator loss
-            d_real_pred = discriminator(real, cond, ts_cond).squeeze()
-            d_fake_pred = discriminator(fake, cond, ts_cond).squeeze()
+            d_real_pred = discriminator(real, cond, time_cond).squeeze()
+            d_fake_pred = discriminator(fake, cond, time_cond).squeeze()
             
             if lossD_type == "logistic":
                 lossD = F.softplus(-d_real_pred) + F.softplus(d_fake_pred)

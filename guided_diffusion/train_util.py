@@ -252,8 +252,7 @@ class TrainLoop:
                 self.ddp_model,
                 self.ddp_discriminator,
                 micro,
-                t,
-                s,
+                t, s,
                 model_kwargs=micro_cond,
                 lossD_type=self.lossD_type
             )  
@@ -289,8 +288,7 @@ class TrainLoop:
                     self.ddp_model,
                     self.ddp_discriminator,
                     micro,
-                    t,
-                    s,
+                    t,s,
                     model_kwargs=micro_cond,
                     lossD_type=self.lossD_type
                 )
