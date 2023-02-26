@@ -83,16 +83,16 @@ class PairSampler():
         self.ratio = ratio
 
     def sample(self, batch_size, device):
+
         sampler = _UniformSampler(self.diffusion.num_timesteps)
         ts, weights = sampler.sample(batch_size, device)
         s = []
         for t in ts.cpu().numpy():
-            s_max = min(int((t+1) * self.ratio),t)
+            s_max = int(min(self.diffusion.num_timesteps * self.ratio, t+1))
             tmp, _ = _UniformSampler(s_max).sample(1, device)
             s.append(tmp)
         s = th.cat(s).long().to(device)
         return ts, weights, s
-
 # class DiscAwareResampler(ScheduleSampler):
 #     def __init__(self, diffusion, sample_type="uniform", 
 #                        loss_name="", loss_target=0.7, ):        

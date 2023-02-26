@@ -17,7 +17,7 @@ from . import dist_util, logger
 from .fp16_util import MixedPrecisionTrainer
 from .nn import update_ema
 from .resample import LossAwareSampler, UniformSampler, PairSampler
-
+from .script_util import create_gaussian_diffusion
 # For ImageNet experiments, this was a good default value.
 # We found that the lg_loss_scale quickly climbed to
 # 20-21 within the first ~1K steps of training.
@@ -30,7 +30,7 @@ class TrainLoop:
         model,
         discriminator,
         diffusion,
-        sampling_diffusion,
+        diffusion_kwargs,
         data,
         batch_size,
         microbatch,
@@ -42,6 +42,7 @@ class TrainLoop:
         ema_rate,
         # log_interval,
         save_interval,
+        sample_type,
         sample_num,
         resume_checkpoint,
         use_fp16=False,
@@ -53,7 +54,7 @@ class TrainLoop:
         self.model = model
         self.discriminator = discriminator
         self.diffusion = diffusion
-        self.sampling_diffusion = sampling_diffusion
+        self.diffusion_kwargs = diffusion_kwargs
 
         self.data = data
         self.batch_size = batch_size
@@ -71,8 +72,9 @@ class TrainLoop:
         )
         # self.log_interval = log_interval
         self.save_interval = save_interval
+        self.sample_type = sample_type
         self.sample_num = sample_num
-        
+
         self.resume_checkpoint = resume_checkpoint
         self.use_fp16 = use_fp16
         self.fp16_scale_growth = fp16_scale_growth
@@ -322,10 +324,10 @@ class TrainLoop:
                 )
             
             # update sampler        
-            if isinstance(self.schedule_sampler, LossAwareSampler):
-                self.schedule_sampler.update_with_local_losses(
-                    t, losses["lossDM"].detach()
-                )
+            # if isinstance(self.schedule_sampler, LossAwareSampler):
+            #     self.schedule_sampler.update_with_local_losses(
+            #         t, losses["lossDM"].detach()
+            #     )
             # elif isinstance(self.schedule_sampler, DiscAwareResampler):
             #     T_cur = self.schedule_sampler.update_with_local_losses(
             #         losses["fake_acc"].detach()
@@ -421,31 +423,24 @@ class TrainLoop:
     def sample_and_save(self, size, sample_num=64):
         
         grid_row = min(max(int(sample_num**0.5),4),sample_num)
-        # sampler
-        ddpm_sample_fn = self.diffusion.p_sample_loop
-        ddim_sample_fn = self.sampling_diffusion.ddim_sample_loop
-        # sample
-        ddpm_model_sample = self.sample(sample_fn=ddpm_sample_fn, model=self.ddp_model, 
-                                        sample_num=sample_num, size=size)
-        ddpm_model_sample = torchvision.utils.make_grid(ddpm_model_sample, grid_row).permute(1,2,0).numpy()
-        ddim_model_sample = self.sample(sample_fn=ddim_sample_fn, model=self.ddp_model, 
-                                        sample_num=sample_num, size=size)
-        ddim_model_sample = torchvision.utils.make_grid(ddim_model_sample, grid_row).permute(1,2,0).numpy()
-
-        # save        
-        if dist.get_rank() == 0:
-            # ddpm sampled
-            sample_step = len(self.diffusion.use_timesteps)
-            filename = f"samples/model_ddpm{sample_step}_{(self.step+self.resume_step):06d}.png"
-            with bf.BlobFile(bf.join(get_blob_logdir(), filename), "wb") as f:
-                Image.fromarray(ddpm_model_sample).save(f)
-            wandb.log({f"ddpm{sample_step}_model": wandb.Image(ddpm_model_sample)})
-            # ddim sampled
-            sample_step = len(self.sampling_diffusion.use_timesteps)
-            filename = f"samples/model_ddim{sample_step}_{(self.step+self.resume_step):06d}.png"
-            with bf.BlobFile(bf.join(get_blob_logdir(), filename), "wb") as f:
-                Image.fromarray(ddim_model_sample).save(f)
-            wandb.log({f"ddim{sample_step}_model": wandb.Image(ddim_model_sample)})
+        for sample_type in self.sample_type:
+            #sample function
+            self.diffusion_kwargs['timestep_respacing'] = sample_type
+            if sample_type.startswith("ddim"):
+                sample_fn = create_gaussian_diffusion(**self.diffusion_kwargs).ddim_sample_loop
+            else:
+                sample_type = "ddpm" + str(sample_type)
+                sample_fn = create_gaussian_diffusion(**self.diffusion_kwargs).p_sample_loop
+            #sample
+            sample = self.sample(sample_fn=sample_fn, model=self.ddp_model, 
+                                 sample_num=sample_num, size=size)
+            sample = torchvision.utils.make_grid(sample, grid_row).permute(1,2,0).numpy()
+            # save        
+            if dist.get_rank() == 0:
+                filename = f"samples/model_{sample_type}_{(self.step+self.resume_step):06d}.png"
+                with bf.BlobFile(bf.join(get_blob_logdir(), filename), "wb") as f:
+                    Image.fromarray(sample).save(f)
+                wandb.log({f"{sample_type}_model": wandb.Image(sample)})
             
     def sample_and_fid(self, size):
         return

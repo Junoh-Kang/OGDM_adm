@@ -43,8 +43,6 @@ def main():
     
     diffusion_kwargs = args_to_dict(args, diffusion_defaults().keys())
     diffusion = create_gaussian_diffusion(**diffusion_kwargs)
-    diffusion_kwargs['timestep_respacing'] = args.sample_type
-    sampling_diffusion = create_gaussian_diffusion(**diffusion_kwargs)
     
     schedule_sampler = create_named_schedule_sampler(args.schedule_sampler, diffusion)
 
@@ -61,7 +59,7 @@ def main():
         model=model,
         discriminator=discriminator,
         diffusion=diffusion,
-        sampling_diffusion=sampling_diffusion,
+        diffusion_kwargs=diffusion_kwargs,
         data=data,
         batch_size=args.batch_size,
         microbatch=args.microbatch,
@@ -73,6 +71,7 @@ def main():
         ema_rate=args.ema_rate,
         # log_interval=args.log_interval,
         save_interval=args.save_interval,
+        sample_type=args.sample_type,
         sample_num=args.sample_num,
         resume_checkpoint=args.resume_checkpoint,
         use_fp16=args.use_fp16,

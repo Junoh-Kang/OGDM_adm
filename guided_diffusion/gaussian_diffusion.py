@@ -599,7 +599,7 @@ class GaussianDiffusion:
         """
         eps = self._predict_eps_from_xstart(x_t, t, x_start)
         alpha_bar = _extract_into_tensor(self.alphas_cumprod, t, x_t.shape)                  # alphabar_t+1
-        alpha_bar_prev = _extract_into_tensor(self.alphas_cumprod_prev, t-s, x_t.shape)          # alphabar_t-s s = 0 ~ t-1
+        alpha_bar_prev = _extract_into_tensor(self.alphas_cumprod_prev, t-s, x_t.shape)          # alphabar_t-s s = 0 ~ t
         # sigma = (
         #     eta
         #     * th.sqrt((1 - alpha_bar_prev) / (1 - alpha_bar))
