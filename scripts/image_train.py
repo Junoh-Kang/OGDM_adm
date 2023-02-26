@@ -47,7 +47,7 @@ def main():
     sampling_diffusion = create_gaussian_diffusion(**diffusion_kwargs)
     
     schedule_sampler = create_named_schedule_sampler(args.schedule_sampler, diffusion)
-    
+
     logger.log("creating data loader...")
     data = load_data(
         data_dir=args.data_dir,
