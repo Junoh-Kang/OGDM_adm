@@ -221,11 +221,6 @@ class TrainLoop:
 
     def run_step(self, batch, cond):
         self.forward_backward(batch, cond)
-        # took_step = self.mp_trainer_model.optimize(self.opt_model)
-        # if self.ddp_discriminator:
-        #     took_step = took_step and self.mp_trainer_disc.optimize(self.opt_disc)
-        # if took_step:
-        #     self._update_ema()
         self._update_ema()
         self._anneal_lr()
         # self.log_step()
@@ -270,20 +265,12 @@ class TrainLoop:
                 lossG = losses["lossDM"] * weights
             
             self.mp_trainer_model.backward(lossG.mean())
-            # print("\n Model Backward")
-            # print(self.mp_trainer_model._compute_norms(), self.mp_trainer_disc._compute_norms())
-            
             self.mp_trainer_model.optimize(self.opt_model)
-            # print("\n Model Optimize")
-            # print(self.mp_trainer_model._compute_norms(), self.mp_trainer_disc._compute_norms())
 
             # compute Discrimination loss and backward
             if self.ddp_discriminator:
 
                 self.mp_trainer_disc.zero_grad()
-                # print("\n Disc Zero Grad")
-                # print(self.mp_trainer_model._compute_norms(), self.mp_trainer_disc._compute_norms())
-
                 compute_losses_D = functools.partial(
                     self.diffusion.training_losses_D,
                     self.ddp_model,
@@ -303,15 +290,8 @@ class TrainLoop:
                 losses["Discrimination"] = lossD
                 
                 self.mp_trainer_disc.backward(lossD.mean())
-                # print("\n Disc Backward")
-                # print(self.mp_trainer_model._compute_norms(), self.mp_trainer_disc._compute_norms())
-                
                 self.mp_trainer_disc.optimize(self.opt_disc)
-                # print("\n Disc Optimize")
-                # print(self.mp_trainer_model._compute_norms(), self.mp_trainer_disc._compute_norms())
-                # print("")
-                # breakpoint()
-                
+       
             # log losses
             if dist.get_rank() == 0:
                 wandb.log({f"Train/Samples": 
@@ -321,17 +301,6 @@ class TrainLoop:
                     self.step,
                     self.diffusion, t, {k: v * weights for k, v in losses.items()}
                 )
-            
-            # update sampler        
-            # if isinstance(self.schedule_sampler, LossAwareSampler):
-            #     self.schedule_sampler.update_with_local_losses(
-            #         t, losses["lossDM"].detach()
-            #     )
-            # elif isinstance(self.schedule_sampler, DiscAwareResampler):
-            #     T_cur = self.schedule_sampler.update_with_local_losses(
-            #         losses["fake_acc"].detach()
-            #     )
-            #     wandb.log({"Train/T_cur": T_cur}, step=self.step)
 
     def _update_ema(self):
         for rate, params in zip(self.ema_rate, self.ema_params):
