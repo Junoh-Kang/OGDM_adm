@@ -16,6 +16,8 @@ from guided_diffusion.script_util import (
 )
 from guided_diffusion.train_util import TrainLoop
 
+import torch
+
 def main():
     args, cfg = create_argparser_and_config()
     
@@ -88,6 +90,7 @@ def load_config(cfg_dir):
 
 def create_argparser_and_config():
     tmp_parser = argparse.ArgumentParser()
+    tmp_parser.add_argument("--local_rank", type=int) # For DDP
     tmp_parser.add_argument('--config', type=str)
     try:
         tmp = load_config('./configs/_default.yaml')
@@ -97,9 +100,9 @@ def create_argparser_and_config():
     tmp_args = tmp_parser.parse_args()
 
     parser = argparse.ArgumentParser()
+    parser.add_argument("--local_rank", type=int) # For DDP
     parser.add_argument('--config', default=tmp_args.config, type=str)
     cfg = load_config(tmp_args.config)
-    
     # check is there any omitted keys
     err = ""
     for k in tmp.keys():
@@ -111,6 +114,7 @@ def create_argparser_and_config():
     
     add_dict_to_argparser(parser, cfg)
     args = parser.parse_args()
+    torch.cuda.set_device(args.local_rank)
 
     return args, args_to_dict(args, cfg.keys())
 

@@ -163,7 +163,13 @@ class TrainLoop:
                         resume_checkpoint, map_location=dist_util.dev()
                     )
                 )
+                self.discriminator.load_state_dict(
+                    dist_util.load_state_dict(
+                        resume_checkpoint, map_location=dist_util.dev()
+                    )
+                )
         dist_util.sync_params(self.model.parameters())
+        dist_util.sync_params(self.discriminator.parameters())
 
     def _load_ema_parameters(self, rate):
         ema_params = copy.deepcopy(self.mp_trainer_model.master_params)
@@ -192,6 +198,13 @@ class TrainLoop:
                 opt_checkpoint, map_location=dist_util.dev()
             )
             self.opt_model.load_state_dict(state_dict)
+        # FIXME(junoh)
+        if bf.exists(opt_checkpoint):
+            logger.log(f"loading optimizer state from checkpoint: {opt_checkpoint}")
+            state_dict = dist_util.load_state_dict(
+                opt_checkpoint, map_location=dist_util.dev()
+            )
+            self.opt_model.load_state_dict(state_dict)
 
     def run_loop(self):
         while (
@@ -203,10 +216,10 @@ class TrainLoop:
             if self.step % self.log_interval == 0:
                 self.log_step()
                 logger.dumpkvs()
-                self.sample_and_save(batch.shape, sample_num=self.sample_num)
+                self.sample_and_show(batch.shape, sample_num=self.sample_num)
             if (self.step % self.save_interval == 0) and self.step > 0:
                 self.save()
-                # self.sample_and_cal_fid(num_samples, batch.shape)        
+                self.sample_and_save(batch.shape, sampel_fid_num=1000)        
                 # Run for a finite amount of time in integration tests.
                 if os.environ.get("DIFFUSION_TRAINING_TEST", "") and self.step > 0:
                     return
@@ -216,7 +229,7 @@ class TrainLoop:
             self.log_step()
             logger.dumpkvs()
             self.save()
-            self.sample_and_save(batch.shape)
+            self.sample_and_show(batch.shape)
 
     def run_step(self, batch, cond):
         self.forward_backward(batch, cond)
@@ -387,7 +400,7 @@ class TrainLoop:
         model.train()
         return th.cat(all_images)
     
-    def sample_and_save(self, size, sample_num=64):
+    def sample_and_show(self, size, sample_num=64):
         grid_row = min(max(int(sample_num**0.5),4),sample_num)
         for sample_type in self.sample_type:
             #sample function
@@ -398,7 +411,7 @@ class TrainLoop:
                 else:
                     sample_type = "ddpm" + str(sample_type)
                     sample_fn = create_gaussian_diffusion(**self.diffusion_kwargs).p_sample_loop
-            else:
+            except:
                 continue
             #sample
             sample = self.sample(sample_fn=sample_fn, model=self.ddp_model, 
@@ -411,31 +424,30 @@ class TrainLoop:
                     Image.fromarray(sample).save(f)
                 wandb.log({f"{sample_type}_model": wandb.Image(sample)})
             
-    def sample_and_fid(self, size, sample_fid_num=1000):
-        # for sample_type in self.sample_type:
-        #     #sample function
-        #     self.diffusion_kwargs['timestep_respacing'] = sample_type
-        #     if sample_type.startswith("ddim"):
-        #         sample_fn = create_gaussian_diffusion(**self.diffusion_kwargs).ddim_sample_loop
-        #     else:
-        #         sample_type = "ddpm" + str(sample_type)
-        #         sample_fn = create_gaussian_diffusion(**self.diffusion_kwargs).p_sample_loop
-        #     sampled = 0
-        #     while sampled < sample_fid_num:
-
-
-        #     #sample
-            
-        #     sample = self.sample(sample_fn=sample_fn, model=self.ddp_model, 
-        #                          sample_num=sample_num, size=size)
-        #     sample = sample.permute(1,2,0).numpy()
-        #     # save        
-        #     if dist.get_rank() == 0:
-        #         filename = f"samples/model_{sample_type}_{(self.step+self.resume_step):06d}.png"
-        #         with bf.BlobFile(bf.join(get_blob_logdir(), filename), "wb") as f:
-        #             Image.fromarray(sample).save(f)
-        #         wandb.log({f"{sample_type}_model": wandb.Image(sample)})
-        return
+    def sample_and_save(self, size, sample_fid_num=1000):
+        for sample_type in self.sample_type:
+            #sample function
+            self.diffusion_kwargs['timestep_respacing'] = sample_type
+            if sample_type.startswith("ddim"):
+                sample_fn = create_gaussian_diffusion(**self.diffusion_kwargs).ddim_sample_loop
+            else:
+                sample_type = "ddpm" + str(sample_type)
+                sample_fn = create_gaussian_diffusion(**self.diffusion_kwargs).p_sample_loop
+            #sample
+            sampled = 0
+            while sampled < sample_fid_num:
+                sample = self.sample(sample_fn=sample_fn, model=self.ddp_model, 
+                                     sample_num=sample_num, size=size)
+                sample = sample.permute(0,2,3,1).numpy()
+                # save        
+                if dist.get_rank() == 0:
+                    foldername = f"fid/model_{sample_type}_{(self.step+self.resume_step):06d}/"
+                    for img in sample:
+                        with bf.BlobFile(bf.join(get_blob_logdir(), foldername), "wb") as f:
+                            Image.fromarray(img).save(f + str(sampled))
+                        sampled += 1
+                        if sampled == sampe_fid_num:
+                            return
 
 def parse_resume_step_from_filename(filename):
     """
