@@ -169,7 +169,8 @@ class TrainLoop:
                     )
                 )
         dist_util.sync_params(self.model.parameters())
-        dist_util.sync_params(self.discriminator.parameters())
+        if self.discriminator:
+            dist_util.sync_params(self.discriminator.parameters())
 
     def _load_ema_parameters(self, rate):
         ema_params = copy.deepcopy(self.mp_trainer_model.master_params)
