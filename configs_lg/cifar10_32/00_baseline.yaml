@@ -1,12 +1,12 @@
 # project:
 log_dir: './logs'
-project: "adm:cifar10_32"
+project: "adm:celeba_64"
 exp: "00_baseline"
 log: ["timestep_respacing"]
 
 # data:
-data_dir: "./data/cifar10_32"
-image_size: 32
+data_dir: "./data/celeba_64"
+image_size: 64
 
 # model:
 num_channels: 128
