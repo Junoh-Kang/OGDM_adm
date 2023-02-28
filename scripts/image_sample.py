@@ -6,6 +6,7 @@ numpy array. This can be used to produce samples for FID evaluation.
 import argparse
 import os
 
+import blobfile as bf
 import numpy as np
 import torch as th
 import torch.distributed as dist
@@ -21,10 +22,12 @@ from guided_diffusion.script_util import (
 
 
 def main():
-    args = create_argparser().parse_args()
+    args, cfg = create_argparser_and_config()
+    ckpt_path = '{}/model/{}'.format(args.model_path, args.pt_name)
     dist_util.setup_dist()
 
-    logger.configure()
+    logger.configure(dir=args.log_dir, 
+                     project=args.project, exp=args.exp, config=cfg)
 
     logger.log("creating model and diffusion...")
     model, diffusion = create_model_and_diffusion(
@@ -33,10 +36,26 @@ def main():
     model.load_state_dict(
         dist_util.load_state_dict(args.model_path, map_location="cpu")
     )
+
+    diffusion_kwargs = args_to_dict(args, diffusion_defaults().keys())
+
+    for sample_type in self.sample_type:
+        #sample function
+        self.diffusion_kwargs['timestep_respacing'] = sample_type
+        if sample_type.startswith("ddim"):
+            sample_fn = create_gaussian_diffusion(**diffusion_kwargs).ddim_sample_loop
+        else:
+            sample_type = "ddpm" + str(sample_type)
+            sample_fn = create_gaussian_diffusion(**diffusion_kwargs).p_sample_loop
+
     model.to(dist_util.dev())
     if args.use_fp16:
         model.convert_to_fp16()
     model.eval()
+
+    # save images in directory
+    sample_dir = '{}/sample_from_model'.format(args.model_path)
+    sample_type_dir = os.path.join(sample_dir, args.sample_type)
 
     logger.log("sampling...")
     all_images = []
@@ -48,9 +67,7 @@ def main():
                 low=0, high=NUM_CLASSES, size=(args.batch_size,), device=dist_util.dev()
             )
             model_kwargs["y"] = classes
-        sample_fn = (
-            diffusion.p_sample_loop if not args.use_ddim else diffusion.ddim_sample_loop
-        )
+        
         sample = sample_fn(
             model,
             (args.batch_size, 3, args.image_size, args.image_size),
@@ -79,68 +96,50 @@ def main():
         label_arr = label_arr[: args.num_samples]
     if dist.get_rank() == 0:
         shape_str = "x".join([str(x) for x in arr.shape])
-        out_path = os.path.join(logger.get_dir(), f"samples_{shape_str}.npz")
+        out_path = os.path.join(sample_dir, f"samples_{args.sample_type}_{shape_str}.npz")
         logger.log(f"saving to {out_path}")
         if args.class_cond:
             np.savez(out_path, arr, label_arr)
         else:
             np.savez(out_path, arr)
 
+
+        for idx in range(len(arr)):
+            #file_path = os.path.join(sample_type_dir, "{}.png".format{idx})
+            with bf.BlobFile(sample_type_dir, "wb") as f:
+                Image.fromarray(img).save(f + str(idx))
+
+
     dist.barrier()
     logger.log("sampling complete")
 
-
-# def create_argparser():
-#     defaults = dict(
-#         clip_denoised=True,
-#         num_samples=10000,
-#         batch_size=16,
-#         use_ddim=False,
-#         model_path="",
-#     )
-#     defaults.update(model_and_diffusion_defaults())
-#     parser = argparse.ArgumentParser()
-#     add_dict_to_argparser(parser, defaults)
-#     return parser
+def load_config(cfg_dir):
+    with open(cfg_dir) as f: 
+        cfg = yaml.load(f, Loader=yaml.FullLoader)
+    return cfg
 
 def create_argparser_and_config():
     tmp_parser = argparse.ArgumentParser()
     tmp_parser.add_argument("--local_rank", type=int) # For DDP
-    tmp_parser.add_argument("--rank", type=int) # For DDP
-    tmp_parser.add_argument("--world_size", type=int) # For DDP
-    tmp_parser.add_argument("--gpu", type=int) # For DDP
-    tmp_parser.add_argument('--config', type=str)
-    try:
-        tmp = load_config('./configs/_default.yaml')
-    except:
-        tmp = load_config('./configs_lg/_default.yaml')
-    add_dict_to_argparser(tmp_parser, tmp)
-    tmp_args = tmp_parser.parse_args()
-
-    # 여기서 ㅈjwkdehls config 읽어오면 됨
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--local_rank", type=int) # For DDP
-    parser.add_argument("--rank", type=int) # For DDP
-    parser.add_argument("--world_size", type=int) # For DDP
-    parser.add_argument("--gpu", type=int) # For DDP
-    parser.add_argument('--config', default=tmp_args.config, type=str)
-    # 폴더를 입력하면 
-    cfg = load_config(tmp_args.config)
-    # check is there any omitted keys
-    err = ""
-    for k in tmp.keys():
-        if k not in cfg.keys():
-            err += k + ", "
-    if err:
-        err += "not implemented"       
-        raise Exception(err)
+    #tmp_parser.add_argument('--config', type=str)
+    tmp_parser.add_argument('--model_path', type=str)
+    tmp_parser.add_argument('--pt_name', type=str)
+    tmp_parser.add_argument('--clip_denoised', type=bool, default=True)
+    tmp_parser.add_argument('--num_samples', type=int, default=50000)
+    tmp_parser.add_argument('--batch_size', type=int, default=16)
     
-    add_dict_to_argparser(parser, cfg)
-    args = parser.parse_args()
+    #tmp_args = tmp_parser.parse_args()
+
+    
+
+    #add_dict_to_argparser(tmp_parser, tmp)
+    
+    cfg = load_config('{}/config.yaml'.format(args.model_path))
+    add_dict_to_argparser(tmp_parser, cfg)
+    args = tmp_parser.parse_args()
     torch.cuda.set_device(args.local_rank)
 
     return args, args_to_dict(args, cfg.keys())
-
 
 
 if __name__ == "__main__":
