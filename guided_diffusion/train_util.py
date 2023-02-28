@@ -211,25 +211,29 @@ class TrainLoop:
             not self.lr_anneal_steps
             or self.step + self.resume_step < self.lr_anneal_steps
         ):
-            batch, cond = next(self.data)
+            batch, cond, idx = next(self.data)
+            print(dist.get_rank(), idx)
             self.run_step(batch, cond)
-            if self.step % self.log_interval == 0:
-                self.log_step()
-                logger.dumpkvs()
-                self.sample_and_show(batch.shape, sample_num=self.sample_num)
-            if (self.step % self.save_interval == 0) and self.step > 0:
-                self.save()
-                self.sample_and_save(batch.shape, sampel_fid_num=1000)        
-                # Run for a finite amount of time in integration tests.
-                if os.environ.get("DIFFUSION_TRAINING_TEST", "") and self.step > 0:
-                    return
+            if dist.get_rank() == 0:
+                if self.step % self.log_interval == 0:
+                    self.log_step()
+                    logger.dumpkvs()
+                    self.sample_and_show(batch.shape, sample_num=self.sample_num)
+                if (self.step % self.save_interval == 0) and self.step > 0:
+                    self.save()
+                    self.sample_and_save(batch.shape, sampel_fid_num=1000)        
+                    # Run for a finite amount of time in integration tests.
+                    if os.environ.get("DIFFUSION_TRAINING_TEST", "") and self.step > 0:
+                        return
             self.step += 1
         # Save the last checkpoint if it wasn't already saved.
-        if (self.step - 1) % self.save_interval != 0:
-            self.log_step()
-            logger.dumpkvs()
-            self.save()
-            self.sample_and_show(batch.shape)
+        if dist.get_rank() == 0:
+            if (self.step - 1) % self.save_interval != 0:
+                self.log_step()
+                logger.dumpkvs()
+                self.save()
+                self.sample_and_show(batch.shape)
+                self.sample_and_save(batch.shape, sample_fid_num=1000)
 
     def run_step(self, batch, cond):
         self.forward_backward(batch, cond)
@@ -380,7 +384,8 @@ class TrainLoop:
         start = time.time()
 
         model.eval()
-        logger.log("sampling")
+        if dist.get_rank() == 0:
+            logger.log("sampling")
         all_images = []
         with th.no_grad():
             while len(all_images) * size[0] < sample_num:                
@@ -394,7 +399,8 @@ class TrainLoop:
                 gathered_samples = [th.zeros_like(sample) for _ in range(dist.get_world_size())]
                 dist.all_gather(gathered_samples, sample)  # gather not supported with NCCL
                 all_images.extend([sample.cpu() for sample in gathered_samples])
-                logger.log(f"created {len(all_images) * size[0]} samples...{time.time()-start:.3}s")
+                if dist.get_rank() == 0:
+                    logger.log(f"created {len(all_images) * size[0]} samples...{time.time()-start:.3}s")
                 
         dist.barrier()
         model.train()

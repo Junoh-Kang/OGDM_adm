@@ -15,22 +15,27 @@ from guided_diffusion.script_util import (
     add_dict_to_argparser,
 )
 from guided_diffusion.train_util import TrainLoop
-
-import torch
+import numpy as np
+import torch as th
+import torch.distributed as dist
 
 def main():
+    
     args, cfg = create_argparser_and_config()
+    dist_util.setup_dist(args)
     
-    dist_util.setup_dist()
-
-    logger.configure(dir=args.log_dir, 
-                     project=args.project, exp=args.exp, config=cfg)
+    seed = dist.get_rank()
+    th.manual_seed(seed)
+    np.random.seed(seed)
     
-    if args.use_discriminator:
-        logger.log("creating model, discriminator and diffusion...")
-    else:
-        logger.log("creating model and diffusion...")
-    
+    if dist.get_rank() == 0:
+        logger.configure(dir=args.log_dir, 
+                        project=args.project, exp=args.exp, config=cfg)
+        if args.use_discriminator:
+            logger.log("creating model, discriminator and diffusion...")
+        else:
+            logger.log("creating model and diffusion...")
+        
     model = create_model(
         **args_to_dict(args, model_defaults().keys())
     ).to(dist_util.dev())
@@ -47,16 +52,16 @@ def main():
     diffusion = create_gaussian_diffusion(**diffusion_kwargs)
     
     schedule_sampler = create_named_schedule_sampler(args.schedule_sampler, diffusion)
-
-    logger.log("creating data loader...")
+    if dist.get_rank() == 0:
+        logger.log("creating data loader...")
     data = load_data(
         data_dir=args.data_dir,
         batch_size=args.batch_size,
         image_size=args.image_size,
         class_cond=args.class_cond,
     )
-   
-    logger.log("training...")
+    if dist.get_rank() == 0:
+        logger.log("training...")
     TrainLoop(
         model=model,
         discriminator=discriminator,
@@ -91,6 +96,10 @@ def load_config(cfg_dir):
 def create_argparser_and_config():
     tmp_parser = argparse.ArgumentParser()
     tmp_parser.add_argument("--local_rank", type=int) # For DDP
+    tmp_parser.add_argument("--rank", type=int) # For DDP
+    tmp_parser.add_argument("--world_size", type=int) # For DDP
+    tmp_parser.add_argument("--gpu", type=int) # For DDP
+    tmp_parser.add_argument("--dist_url", type=int) # For DDP
     tmp_parser.add_argument('--config', type=str)
     try:
         tmp = load_config('./configs/_default.yaml')
@@ -101,6 +110,10 @@ def create_argparser_and_config():
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--local_rank", type=int) # For DDP
+    parser.add_argument("--rank", type=int) # For DDP
+    parser.add_argument("--world_size", type=int) # For DDP
+    parser.add_argument("--gpu", type=int) # For DDP
+    parser.add_argument("--dist_url", type=int) # For DDP
     parser.add_argument('--config', default=tmp_args.config, type=str)
     cfg = load_config(tmp_args.config)
     # check is there any omitted keys
@@ -114,7 +127,7 @@ def create_argparser_and_config():
     
     add_dict_to_argparser(parser, cfg)
     args = parser.parse_args()
-    torch.cuda.set_device(args.local_rank)
+    # torch.cuda.set_device(args.local_rank)
 
     return args, args_to_dict(args, cfg.keys())
 
