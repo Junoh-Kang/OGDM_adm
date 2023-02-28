@@ -3,9 +3,10 @@ import random
 
 from PIL import Image
 import blobfile as bf
-from mpi4py import MPI
+# from mpi4py import MPI
 import numpy as np
 from torch.utils.data import DataLoader, Dataset
+import torch.distributed as dist
 
 
 def load_data(
@@ -50,8 +51,8 @@ def load_data(
         image_size,
         all_files,
         classes=classes,
-        shard=MPI.COMM_WORLD.Get_rank(),
-        num_shards=MPI.COMM_WORLD.Get_size(),
+        shard=dist.get_rank(),
+        num_shards=dist.get_world_size(),
         random_crop=random_crop,
         random_flip=random_flip,
     )
@@ -120,7 +121,7 @@ class ImageDataset(Dataset):
         out_dict = {}
         if self.local_classes is not None:
             out_dict["y"] = np.array(self.local_classes[idx], dtype=np.int64)
-        return np.transpose(arr, [2, 0, 1]), out_dict
+        return np.transpose(arr, [2, 0, 1]), out_dict, idx
 
 
 def center_crop_arr(pil_image, image_size):

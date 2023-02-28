@@ -22,8 +22,8 @@ from guided_diffusion.script_util import (
 
 def main():
     args = create_argparser().parse_args()
-
     dist_util.setup_dist()
+
     logger.configure()
 
     logger.log("creating model and diffusion...")
@@ -90,18 +90,57 @@ def main():
     logger.log("sampling complete")
 
 
-def create_argparser():
-    defaults = dict(
-        clip_denoised=True,
-        num_samples=10000,
-        batch_size=16,
-        use_ddim=False,
-        model_path="",
-    )
-    defaults.update(model_and_diffusion_defaults())
+# def create_argparser():
+#     defaults = dict(
+#         clip_denoised=True,
+#         num_samples=10000,
+#         batch_size=16,
+#         use_ddim=False,
+#         model_path="",
+#     )
+#     defaults.update(model_and_diffusion_defaults())
+#     parser = argparse.ArgumentParser()
+#     add_dict_to_argparser(parser, defaults)
+#     return parser
+
+def create_argparser_and_config():
+    tmp_parser = argparse.ArgumentParser()
+    tmp_parser.add_argument("--local_rank", type=int) # For DDP
+    tmp_parser.add_argument("--rank", type=int) # For DDP
+    tmp_parser.add_argument("--world_size", type=int) # For DDP
+    tmp_parser.add_argument("--gpu", type=int) # For DDP
+    tmp_parser.add_argument('--config', type=str)
+    try:
+        tmp = load_config('./configs/_default.yaml')
+    except:
+        tmp = load_config('./configs_lg/_default.yaml')
+    add_dict_to_argparser(tmp_parser, tmp)
+    tmp_args = tmp_parser.parse_args()
+
+    # 여기서 ㅈjwkdehls config 읽어오면 됨
     parser = argparse.ArgumentParser()
-    add_dict_to_argparser(parser, defaults)
-    return parser
+    parser.add_argument("--local_rank", type=int) # For DDP
+    parser.add_argument("--rank", type=int) # For DDP
+    parser.add_argument("--world_size", type=int) # For DDP
+    parser.add_argument("--gpu", type=int) # For DDP
+    parser.add_argument('--config', default=tmp_args.config, type=str)
+    # 폴더를 입력하면 
+    cfg = load_config(tmp_args.config)
+    # check is there any omitted keys
+    err = ""
+    for k in tmp.keys():
+        if k not in cfg.keys():
+            err += k + ", "
+    if err:
+        err += "not implemented"       
+        raise Exception(err)
+    
+    add_dict_to_argparser(parser, cfg)
+    args = parser.parse_args()
+    torch.cuda.set_device(args.local_rank)
+
+    return args, args_to_dict(args, cfg.keys())
+
 
 
 if __name__ == "__main__":
