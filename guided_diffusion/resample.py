@@ -71,24 +71,22 @@ class UniformSampler(ScheduleSampler):
 
 class _UniformSampler(ScheduleSampler):
     def __init__(self, T):
-        self.T = T
         self._weights = np.ones([T])
 
     def weights(self):
         return self._weights
 
 class PairSampler():
-    def __init__(self, diffusion, ratio):
+    def __init__(self, diffusion, ratio=0):
         self.diffusion = diffusion
         self.ratio = ratio
 
     def sample(self, batch_size, device):
-
         sampler = _UniformSampler(self.diffusion.num_timesteps)
         ts, weights = sampler.sample(batch_size, device)
         s = []
         for t in ts.cpu().numpy():
-            s_max = int(min(self.diffusion.num_timesteps * self.ratio, t+1))
+            s_max = int(min(self.diffusion.num_timesteps * self.ratio, t)) + 1
             tmp, _ = _UniformSampler(s_max).sample(1, device)
             s.append(tmp)
         s = th.cat(s).long().to(device)

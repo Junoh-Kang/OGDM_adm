@@ -47,10 +47,11 @@ def main():
         ).to(dist_util.dev())
     else:
         discriminator = None
+
     
     diffusion_kwargs = args_to_dict(args, diffusion_defaults().keys())
+    diffusion_kwargs['timestep_respacing'] = args.timestep_respacing
     diffusion = create_gaussian_diffusion(**diffusion_kwargs)
-    
     schedule_sampler = create_named_schedule_sampler(args.schedule_sampler, diffusion)
     if dist.get_rank() == 0:
         logger.log("creating data loader...")
