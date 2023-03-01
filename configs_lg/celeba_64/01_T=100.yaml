@@ -1,7 +1,7 @@
 # project:
 log_dir: './logs'
 project: "lgai_celeba_64"
-exp: "00_baseline"
+exp: "01_T=100"
 log: ["schedule_sampler", "lossG_weight", "lr_disc"]
 
 # data:

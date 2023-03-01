@@ -1,6 +1,6 @@
 # project:
 log_dir: './logs'
-project: "adm_cifar10_32"
+project: "lgai_cifar10_32"
 exp: "00_baseline"
 log: ["timestep_respacing"]
 

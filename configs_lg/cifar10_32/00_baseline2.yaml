@@ -1,12 +1,12 @@
 # project:
 log_dir: './logs'
-project: "lgai_celeba_64"
+project: "lgai_cifar10_32"
 exp: "00_baseline"
-log: ["timestep_repacing", "schedule_sampler"] 
+log: ["timestep_respacing", "schedule_sampler"]
 
 # data:
-data_dir: "./data/celeba_64"
-image_size: 64
+data_dir: "./data/cifar10_32"
+image_size: 32
 
 # model:
 num_channels: 128
