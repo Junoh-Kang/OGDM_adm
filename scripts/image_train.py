@@ -51,6 +51,14 @@ def main():
     
     diffusion_kwargs = args_to_dict(args, diffusion_defaults().keys())
     diffusion_kwargs['timestep_respacing'] = args.timestep_respacing
+
+    if args.timestep_respacing == "ddim1000":
+        args.sample_type = ["ddim1000", "ddim100", "ddim10"]
+    if args.timestep_respacing == "ddim100":
+        args.sample_type = ["ddim100", "ddim10"]
+    elif args.timestep_respacing == "ddim10":
+        args.sample_type = ["ddim10"]
+
     diffusion = create_gaussian_diffusion(**diffusion_kwargs)
     schedule_sampler = create_named_schedule_sampler(args.schedule_sampler, diffusion)
     if dist.get_rank() == 0:
@@ -128,7 +136,6 @@ def create_argparser_and_config():
     
     add_dict_to_argparser(parser, cfg)
     args = parser.parse_args()
-    # torch.cuda.set_device(args.local_rank)
 
     return args, args_to_dict(args, cfg.keys())
 

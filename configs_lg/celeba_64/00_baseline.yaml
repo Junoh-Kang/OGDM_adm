@@ -1,12 +1,12 @@
 # project:
 log_dir: './logs'
-project: "adm:cifar10_32"
+project: "lgai_celeba_64"
 exp: "00_baseline"
 log: ["timestep_respacing"]
 
 # data:
-data_dir: "./data/cifar10_32"
-image_size: 32
+data_dir: "./data/celeba_64"
+image_size: 64
 
 # model:
 num_channels: 128
@@ -55,7 +55,7 @@ grad_weight: 0.5
 ema_rate: '0.9999'
 log_interval: 10
 save_interval: 5000
-sample_num: 8
+sample_num: 64
 sample_type: ["ddim1000", "ddim100", "ddim10"]
 # etc
 fp16_scale_growth: 0.001

@@ -214,7 +214,7 @@ class TrainLoop:
         ):
             batch, cond, idx = next(self.data)
             self.run_step(batch, cond)
-            if self.step % self.log_interval == 0:
+            if self.step % self.log_interval == 0 and self.step > 0:
                 if dist.get_rank() == 0:
                     self.log_step()
                     logger.dumpkvs()
