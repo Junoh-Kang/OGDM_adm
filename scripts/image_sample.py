@@ -5,11 +5,13 @@ numpy array. This can be used to produce samples for FID evaluation.
 import yaml
 import argparse
 import os
-
+import time 
+from PIL import Image
 import blobfile as bf
 import numpy as np
 import torch as th
 import torch.distributed as dist
+from torch.nn.parallel.distributed import DistributedDataParallel as DDP
 
 from guided_diffusion import dist_util, logger
 from guided_diffusion.script_util import (
@@ -18,134 +20,96 @@ from guided_diffusion.script_util import (
     args_to_dict,
     add_dict_to_argparser,
 )
-
 def main():
     args, cfg = create_argparser_and_config()
     dist_util.setup_dist(args)
 
-    if dist.get_rank() == 0:
-        logger.configure(dir=args.log_dir, 
-                         project=args.project, exp=args.exp, config=cfg)
-        logger.log("creating model and diffusion...")
-    
-    model, diffusion = create_model_and_diffusion(
-        **args_to_dict(args, model_and_diffusion_defaults().keys())
-    )
-    if dist.get_rank() == 0:
-        breakpoint()
-    ckpt_path = '{}/model/{}'.format(args.model_path, args.pt_name)
-    model.load_state_dict(
-        dist_util.load_state_dict(args.model_path, map_location="cpu")
-    )
-    
-
-    diffusion_kwargs = args_to_dict(args, diffusion_defaults().keys())
-
-    for sample_type in self.sample_type:
-        #sample function
-        self.diffusion_kwargs['timestep_respacing'] = sample_type
-        if sample_type.startswith("ddim"):
-            sample_fn = create_gaussian_diffusion(**diffusion_kwargs).ddim_sample_loop
-        else:
-            sample_type = "ddpm" + str(sample_type)
-            sample_fn = create_gaussian_diffusion(**diffusion_kwargs).p_sample_loop
-
-    model.to(dist_util.dev())
-    if args.use_fp16:
-        model.convert_to_fp16()
-    model.eval()
-
-    # save images in directory
-    sample_dir = '{}/sample_from_model'.format(args.model_path)
-    sample_type_dir = os.path.join(sample_dir, args.sample_type)
-
-    logger.log("sampling...")
-    all_images = []
-    all_labels = []
-    while len(all_images) * args.batch_size < args.num_samples:
-        model_kwargs = {}
-        if args.class_cond:
-            classes = th.randint(
-                low=0, high=NUM_CLASSES, size=(args.batch_size,), device=dist_util.dev()
-            )
-            model_kwargs["y"] = classes
-        
-        sample = sample_fn(
+    # load model
+    model = create_model(
+        **args_to_dict(args, model_defaults().keys())
+    ).to(dist_util.dev())
+    ckpt_path = f"{args.model_path}/model/{args.pt_name}"
+    state_dict = th.load(ckpt_path)
+    model.load_state_dict(state_dict)
+    if th.cuda.is_available():
+        use_ddp = True
+        ddp_model = DDP(
             model,
-            (args.batch_size, 3, args.image_size, args.image_size),
-            clip_denoised=args.clip_denoised,
-            model_kwargs=model_kwargs,
+            device_ids=[dist_util.dev()],
+            output_device=dist_util.dev(),
+            broadcast_buffers=False,
+            bucket_cap_mb=128,
+            find_unused_parameters=False,
         )
-        sample = ((sample + 1) * 127.5).clamp(0, 255).to(th.uint8)
-        sample = sample.permute(0, 2, 3, 1)
-        sample = sample.contiguous()
+    else:
+        use_ddp = False
+        ddp_model = model
+    ddp_model.eval()
+    
+    #set sampling methods
+    size = [args.batch_size, 3, args.image_size, args.image_size]
+    diffusion_kwargs = args_to_dict(args, diffusion_defaults().keys())
+    if args.timestep_respacing == "ddim1000":
+        args.sample_type = ["ddim10", "ddim100", "ddim1000"]
+    if args.timestep_respacing == "ddim100":
+        args.sample_type = ["ddim100", "ddim10"]
+    elif args.timestep_respacing == "ddim10":
+        args.sample_type = ["ddim10"]
+    
+    for sample_type in args.sample_type:
+        #sample method
+        diffusion_kwargs['timestep_respacing'] = sample_type
+        try:
+            if sample_type.startswith("ddim"):
+                sample_fn = create_gaussian_diffusion(**diffusion_kwargs).ddim_sample_loop
+            else:
+                sample_type = "ddpm" + str(sample_type)
+                sample_fn = create_gaussian_diffusion(**diffusion_kwargs).p_sample_loop
+        except:
+            continue
+        #sample
+        if dist.get_rank() == 0:
+            start = time.time()
+            print(f"sampling {sample_type}")
         
-        gathered_samples = [th.zeros_like(sample) for _ in range(dist.get_world_size())]
-        dist.all_gather(gathered_samples, sample)  # gather not supported with NCCL
-        all_images.extend([sample.cpu().numpy() for sample in gathered_samples])
-        if args.class_cond:
-            gathered_labels = [
-                th.zeros_like(classes) for _ in range(dist.get_world_size())
-            ]
-            dist.all_gather(gathered_labels, classes)
-            all_labels.extend([labels.cpu().numpy() for labels in gathered_labels])
-        logger.log(f"created {len(all_images) * args.batch_size} samples")
-
-    arr = np.concatenate(all_images, axis=0)
-    arr = arr[: args.num_samples]
-    if args.class_cond:
-        label_arr = np.concatenate(all_labels, axis=0)
-        label_arr = label_arr[: args.num_samples]
-    if dist.get_rank() == 0:
-        shape_str = "x".join([str(x) for x in arr.shape])
-        out_path = os.path.join(sample_dir, f"samples_{args.sample_type}_{shape_str}.npz")
-        logger.log(f"saving to {out_path}")
-        if args.class_cond:
-            np.savez(out_path, arr, label_arr)
-        else:
-            np.savez(out_path, arr)
-
-
-        for idx in range(len(arr)):
-            #file_path = os.path.join(sample_type_dir, "{}.png".format{idx})
-            with bf.BlobFile(sample_type_dir, "wb") as f:
-                Image.fromarray(img).save(f + str(idx))
-
-
-    dist.barrier()
-    logger.log("sampling complete")
+        folder = f"{args.model_path}/fid/{args.pt_name}/{sample_type}"
+        os.makedirs(folder, exist_ok=True)
+        num_samples = args.num_samples
+        num_sampled = 0
+        all_images = []
+        with th.no_grad():
+            # while num_sampled < args.num_samples:  
+            #     sample = sample_fn(ddp_model, (min(size[0], args.num_samples - num_sampled), *size[1:]),clip_denoised=args.clip_denoised,)        
+            while len(all_images) * size[0] < num_samples:                
+                sample = sample_fn(
+                    ddp_model, 
+                    (min(size[0], num_samples - len(all_images) * size[0]), *size[1:]),
+                    clip_denoised=args.clip_denoised,
+                )
+                sample = ((sample + 1) * 127.5).clamp(0, 255).to(th.uint8)
+                sample = sample.contiguous()
+                gathered_samples = [th.zeros_like(sample) for _ in range(dist.get_world_size())]
+                dist.all_gather(gathered_samples, sample)  # gather not supported with NCCL
+                all_images.extend([sample.cpu() for sample in gathered_samples])
+                
+                if dist.get_rank() == 0:
+                    print(f"created {len(all_images) * size[0]} samples...{time.time()-start:.3}s")
+                    images = th.cat(all_images)
+                    for i, image in enumerate(images):
+                        image = image.permute(1,2,0).numpy()
+                        Image.fromarray(image).save(f"{folder}/img{num_sampled + i}.png")
+                        
+                num_samples -= len(all_images) * size[0]
+                num_sampled += len(all_images) * size[0]
+                all_images = []
+                dist.barrier()
+        dist.barrier()
+        
 
 def load_config(cfg_dir):
     with open(cfg_dir) as f: 
         cfg = yaml.load(f, Loader=yaml.FullLoader)
     return cfg
-
-# def create_argparser_and_config():
-#     tmp_parser = argparse.ArgumentParser()
-#     tmp_parser.add_argument('--model_path', type=str)
-#     tmp_parser.add_argument('--pt_name', type=str)
-#     tmp_parser.add_argument('--clip_denoised', type=bool, default=True)
-#     tmp_parser.add_argument('--num_samples', type=int, default=50000)
-#     tmp_parser.add_argument("--local_rank", type=int) # For DDP
-#     tmp_parser.add_argument("--rank", type=int) # For DDP
-#     tmp_parser.add_argument("--world_size", type=int) # For DDP
-#     tmp_parser.add_argument("--gpu", type=int) # For DDP
-#     tmp_parser.add_argument("--dist_url", type=int) # For DDP
-
-#     # tmp_parser.add_argument('--batch_size', type=int, default=64)
-#     try:
-#         tmp = load_config('./configs/_default.yaml')
-#     except:
-#         tmp = load_config('./configs_lg/_default.yaml')
-#     tmp_args = tmp_parser.parse_args()
-#     add_dict_to_argparser(tmp_parser, tmp)
-    
-#     cfg = load_config(f"{tmp_args.model_path}/config.yaml")
-#     add_dict_to_argparser(parser, cfg)
-#     args = tmp_parser.parse_args()
-#     torch.cuda.set_device(args.local_rank)
-
-#     return args, args_to_dict(args, cfg.keys())
 
 def create_argparser_and_config():
     tmp_parser = argparse.ArgumentParser()
@@ -166,7 +130,7 @@ def create_argparser_and_config():
         tmp = load_config('./configs_lg/_default.yaml')
     add_dict_to_argparser(tmp_parser, tmp)
     tmp_args = tmp_parser.parse_args()
-
+    
     parser = argparse.ArgumentParser()
     parser.add_argument('--model_path', type=str)
     parser.add_argument('--pt_name', type=str)
@@ -179,7 +143,8 @@ def create_argparser_and_config():
     parser.add_argument("--gpu", type=int) # For DDP
     parser.add_argument("--dist_url", type=int) # For DDP
     parser.add_argument('--config', default=tmp_args.config, type=str)
-    cfg = load_config(tmp_args.config)
+    cfg = load_config(f"{tmp_args.model_path}/config.yaml")
+
     # check is there any omitted keys
     err = ""
     for k in tmp.keys():

@@ -12,7 +12,7 @@ def create_named_schedule_sampler(name, diffusion):
     :param name: the name of the sampler.
     :param diffusion: the diffusion object to sample for.
     """
-
+    # name = name.replace("'", "").replace('"','')
     if name == "uniform":
         return UniformSampler(diffusion)
     elif name == "loss_aware":
