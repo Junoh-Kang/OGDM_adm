@@ -2,7 +2,7 @@
 Generate a large batch of image samples from a model and save them as a large
 numpy array. This can be used to produce samples for FID evaluation.
 """
-
+import yaml
 import argparse
 import os
 
@@ -13,29 +13,31 @@ import torch.distributed as dist
 
 from guided_diffusion import dist_util, logger
 from guided_diffusion.script_util import (
-    NUM_CLASSES,
-    model_and_diffusion_defaults,
-    create_model_and_diffusion,
-    add_dict_to_argparser,
+    diffusion_defaults, model_defaults, discriminator_defaults,
+    create_gaussian_diffusion, create_model, create_discriminator,
     args_to_dict,
+    add_dict_to_argparser,
 )
-
 
 def main():
     args, cfg = create_argparser_and_config()
-    ckpt_path = '{}/model/{}'.format(args.model_path, args.pt_name)
-    dist_util.setup_dist()
+    dist_util.setup_dist(args)
 
-    logger.configure(dir=args.log_dir, 
-                     project=args.project, exp=args.exp, config=cfg)
-
-    logger.log("creating model and diffusion...")
+    if dist.get_rank() == 0:
+        logger.configure(dir=args.log_dir, 
+                         project=args.project, exp=args.exp, config=cfg)
+        logger.log("creating model and diffusion...")
+    
     model, diffusion = create_model_and_diffusion(
         **args_to_dict(args, model_and_diffusion_defaults().keys())
     )
+    if dist.get_rank() == 0:
+        breakpoint()
+    ckpt_path = '{}/model/{}'.format(args.model_path, args.pt_name)
     model.load_state_dict(
         dist_util.load_state_dict(args.model_path, map_location="cpu")
     )
+    
 
     diffusion_kwargs = args_to_dict(args, diffusion_defaults().keys())
 
@@ -118,26 +120,77 @@ def load_config(cfg_dir):
         cfg = yaml.load(f, Loader=yaml.FullLoader)
     return cfg
 
+# def create_argparser_and_config():
+#     tmp_parser = argparse.ArgumentParser()
+#     tmp_parser.add_argument('--model_path', type=str)
+#     tmp_parser.add_argument('--pt_name', type=str)
+#     tmp_parser.add_argument('--clip_denoised', type=bool, default=True)
+#     tmp_parser.add_argument('--num_samples', type=int, default=50000)
+#     tmp_parser.add_argument("--local_rank", type=int) # For DDP
+#     tmp_parser.add_argument("--rank", type=int) # For DDP
+#     tmp_parser.add_argument("--world_size", type=int) # For DDP
+#     tmp_parser.add_argument("--gpu", type=int) # For DDP
+#     tmp_parser.add_argument("--dist_url", type=int) # For DDP
+
+#     # tmp_parser.add_argument('--batch_size', type=int, default=64)
+#     try:
+#         tmp = load_config('./configs/_default.yaml')
+#     except:
+#         tmp = load_config('./configs_lg/_default.yaml')
+#     tmp_args = tmp_parser.parse_args()
+#     add_dict_to_argparser(tmp_parser, tmp)
+    
+#     cfg = load_config(f"{tmp_args.model_path}/config.yaml")
+#     add_dict_to_argparser(parser, cfg)
+#     args = tmp_parser.parse_args()
+#     torch.cuda.set_device(args.local_rank)
+
+#     return args, args_to_dict(args, cfg.keys())
+
 def create_argparser_and_config():
     tmp_parser = argparse.ArgumentParser()
-    tmp_parser.add_argument("--local_rank", type=int) # For DDP
-    #tmp_parser.add_argument('--config', type=str)
     tmp_parser.add_argument('--model_path', type=str)
     tmp_parser.add_argument('--pt_name', type=str)
     tmp_parser.add_argument('--clip_denoised', type=bool, default=True)
     tmp_parser.add_argument('--num_samples', type=int, default=50000)
-    tmp_parser.add_argument('--batch_size', type=int, default=16)
-    
-    #tmp_args = tmp_parser.parse_args()
 
-    
+    tmp_parser.add_argument("--local_rank", type=int) # For DDP
+    tmp_parser.add_argument("--rank", type=int) # For DDP
+    tmp_parser.add_argument("--world_size", type=int) # For DDP
+    tmp_parser.add_argument("--gpu", type=int) # For DDP
+    tmp_parser.add_argument("--dist_url", type=int) # For DDP
+    tmp_parser.add_argument('--config', type=str)
+    try:
+        tmp = load_config('./configs/_default.yaml')
+    except:
+        tmp = load_config('./configs_lg/_default.yaml')
+    add_dict_to_argparser(tmp_parser, tmp)
+    tmp_args = tmp_parser.parse_args()
 
-    #add_dict_to_argparser(tmp_parser, tmp)
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--model_path', type=str)
+    parser.add_argument('--pt_name', type=str)
+    parser.add_argument('--clip_denoised', type=bool, default=True)
+    parser.add_argument('--num_samples', type=int, default=50000)
     
-    cfg = load_config('{}/config.yaml'.format(args.model_path))
-    add_dict_to_argparser(tmp_parser, cfg)
-    args = tmp_parser.parse_args()
-    torch.cuda.set_device(args.local_rank)
+    parser.add_argument("--local_rank", type=int) # For DDP
+    parser.add_argument("--rank", type=int) # For DDP
+    parser.add_argument("--world_size", type=int) # For DDP
+    parser.add_argument("--gpu", type=int) # For DDP
+    parser.add_argument("--dist_url", type=int) # For DDP
+    parser.add_argument('--config', default=tmp_args.config, type=str)
+    cfg = load_config(tmp_args.config)
+    # check is there any omitted keys
+    err = ""
+    for k in tmp.keys():
+        if k not in cfg.keys():
+            err += k + ", "
+    if err:
+        err += "not implemented"       
+        raise Exception(err)
+    
+    add_dict_to_argparser(parser, cfg)
+    args = parser.parse_args()
 
     return args, args_to_dict(args, cfg.keys())
 

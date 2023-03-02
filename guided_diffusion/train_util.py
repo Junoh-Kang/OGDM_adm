@@ -18,6 +18,8 @@ from .fp16_util import MixedPrecisionTrainer
 from .nn import update_ema
 from .resample import LossAwareSampler, UniformSampler, PairSampler
 from .script_util import create_gaussian_diffusion
+
+import time
 # For ImageNet experiments, this was a good default value.
 # We found that the lg_loss_scale quickly climbed to
 # 20-21 within the first ~1K steps of training.
@@ -85,7 +87,8 @@ class TrainLoop:
         self.step = 0
         self.resume_step = 0
         self.global_batch = self.batch_size * dist.get_world_size()
-
+        # FIXME
+        self.run_time = 0
         self.sync_cuda = th.cuda.is_available()
         
         self._load_and_sync_parameters()
@@ -212,12 +215,15 @@ class TrainLoop:
             not self.lr_anneal_steps
             or self.step + self.resume_step < self.lr_anneal_steps
         ):
+            if self.step == 0 and dist.get_rank() == 0:
+                self.run_time = time.time()
             batch, cond, idx = next(self.data)
             self.run_step(batch, cond)
             if self.step % self.log_interval == 0 and self.step > 0:
                 if dist.get_rank() == 0:
                     self.log_step()
                     logger.dumpkvs()
+                    self.run_time = time.time()
                 self.sample_and_show(batch.shape, sample_num=self.sample_num)
             if (self.step % self.save_interval == 0) and self.step > 0:
                 self.save()
@@ -250,12 +256,12 @@ class TrainLoop:
                 for k, v in cond.items()
             }
             last_batch = (i + self.microbatch) >= batch.shape[0]
+
             if isinstance(self.schedule_sampler, PairSampler):
                 t, weights, s = self.schedule_sampler.sample(micro.shape[0], dist_util.dev())
             else:
                 t, weights = self.schedule_sampler.sample(micro.shape[0], dist_util.dev())
                 s = t
-            
             # compute Generation loss and backward
             self.mp_trainer_model.zero_grad()
             
@@ -334,6 +340,7 @@ class TrainLoop:
     def log_step(self):
         logger.logkv("step", self.step + self.resume_step)
         logger.logkv("samples", (self.step + self.resume_step + 1) * self.global_batch)
+        logger.logkv(f"time per {self.log_interval}", time.time() - self.run_time)
 
     def save(self):
         def save_checkpoint(rate, params):
@@ -380,7 +387,6 @@ class TrainLoop:
         """
         return (sample_num, c, h, w) tensor
         """
-        import time
         start = time.time()
 
         model.eval()
