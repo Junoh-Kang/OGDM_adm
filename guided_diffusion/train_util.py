@@ -64,7 +64,7 @@ class TrainLoop:
         self.lr_model = lr_model
         self.lr_disc = lr_disc
         self.lossD_type = lossD_type
-        self.lossG_weight = lossG_weight
+        self.lossG_weight = float(lossG_weight)
         self.grad_weight = grad_weight
 
         self.ema_rate = (
@@ -280,6 +280,7 @@ class TrainLoop:
                 with self.ddp_model.no_sync():
                     losses = compute_losses_G()
             if self.ddp_discriminator:
+                assert type(self.lossG_weight) is float, "lossG_weight is not float"
                 if self.lossG_weight == float("inf"): # ddGAN
                     lossG = losses["lossG"]
                 else: # ours

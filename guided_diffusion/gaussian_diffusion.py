@@ -40,6 +40,13 @@ def get_named_beta_schedule(schedule_name, num_diffusion_timesteps):
             num_diffusion_timesteps,
             lambda t: math.cos((t + 0.008) / 1.008 * math.pi / 2) ** 2,
         )
+    elif schedule_name == "vp-sde":
+        beta_min = 0.1
+        beta_max = 20.0
+        return betas_for_alpha_bar(
+            num_diffusion_timesteps,
+            lambda t: np.exp(-beta_min*t - 0.5*(beta_max-beta_min)*(t**2)),
+        )
     else:
         raise NotImplementedError(f"unknown beta schedule: {schedule_name}")
 
