@@ -48,7 +48,7 @@ def main():
     else:
         discriminator = None
 
-    
+
     diffusion_kwargs = args_to_dict(args, diffusion_defaults().keys())
     diffusion_kwargs['timestep_respacing'] = args.timestep_respacing
 

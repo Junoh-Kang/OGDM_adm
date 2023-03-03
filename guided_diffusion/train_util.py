@@ -279,13 +279,14 @@ class TrainLoop:
             else:
                 with self.ddp_model.no_sync():
                     losses = compute_losses_G()
-
             if self.ddp_discriminator:
-                lossG = losses["lossDM"] * weights + self.lossG_weight * losses["lossG"]
-                losses["Generation"] = lossG
-            else:
+                if self.lossG_weight == float("inf"): # ddGAN
+                    lossG = losses["lossG"]
+                else: # ours
+                    lossG = losses["lossDM"] * weights + self.lossG_weight * losses["lossG"]
+            else: # baseline diffusion
                 lossG = losses["lossDM"] * weights
-            
+            losses["Generation"] = lossG
             self.mp_trainer_model.backward(lossG.mean())
             self.mp_trainer_model.optimize(self.opt_model)
 
