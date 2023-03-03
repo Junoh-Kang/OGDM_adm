@@ -261,7 +261,7 @@ class TrainLoop:
                 t, weights, s = self.schedule_sampler.sample(micro.shape[0], dist_util.dev())
             else:
                 t, weights = self.schedule_sampler.sample(micro.shape[0], dist_util.dev())
-                s = t
+                s = th.zeros_like(t).to(dist_util.dev())
             # compute Generation loss and backward
             self.mp_trainer_model.zero_grad()
             
