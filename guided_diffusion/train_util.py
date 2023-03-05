@@ -418,7 +418,7 @@ class TrainLoop:
         return th.cat(all_images)
     
     def sample_and_show(self, size, sample_num=64):
-        grid_row = min(max(int(sample_num**0.5),4),sample_num)
+        grid_row = min(max(int(sample_num**0.5),8),sample_num)
         for sample_type in self.sample_type:
             #sample function
             self.diffusion_kwargs['timestep_respacing'] = sample_type
