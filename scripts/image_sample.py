@@ -28,6 +28,7 @@ def main():
     model = create_model(
         **args_to_dict(args, model_defaults().keys())
     ).to(dist_util.dev())
+    if not args.pt_name.endswith("pt"): args.pt_name += ".pt"
     ckpt_path = f"{args.model_path}/model/{args.pt_name}"
     state_dict = th.load(ckpt_path)
     model.load_state_dict(state_dict)
@@ -49,12 +50,8 @@ def main():
     #set sampling methods
     size = [args.batch_size, 3, args.image_size, args.image_size]
     diffusion_kwargs = args_to_dict(args, diffusion_defaults().keys())
-    if args.timestep_respacing == "ddim1000":
-        args.sample_type = ["ddim10", "ddim100", "ddim1000"]
-    if args.timestep_respacing == "ddim100":
-        args.sample_type = ["ddim100", "ddim10"]
-    elif args.timestep_respacing == "ddim10":
-        args.sample_type = ["ddim10"]
+
+    args.sample_type = args.sampler.split(",")
     
     for sample_type in args.sample_type:
         #sample method
@@ -117,6 +114,7 @@ def create_argparser_and_config():
     tmp_parser.add_argument('--pt_name', type=str)
     tmp_parser.add_argument('--clip_denoised', type=bool, default=True)
     tmp_parser.add_argument('--num_samples', type=int, default=50000)
+    tmp_parser.add_argument('--sampler', type=str)
 
     tmp_parser.add_argument("--local_rank", type=int) # For DDP
     tmp_parser.add_argument("--rank", type=int) # For DDP
@@ -136,6 +134,7 @@ def create_argparser_and_config():
     parser.add_argument('--pt_name', type=str)
     parser.add_argument('--clip_denoised', type=bool, default=True)
     parser.add_argument('--num_samples', type=int, default=50000)
+    parser.add_argument('--sampler', type=str)
     
     parser.add_argument("--local_rank", type=int) # For DDP
     parser.add_argument("--rank", type=int) # For DDP

@@ -1,8 +1,8 @@
 # project:
 log_dir: './logs'
 project: "lgai_celeba_64"
-exp: "02_T=100"
-log: ["schedule_sampler", "lossG_weight"]
+exp: "03_T=8"
+log: ["diffusion_steps", "lossG_weight", "schedule_sampler"]
 
 # data:
 data_dir: "./data/celeba_64"
@@ -29,14 +29,14 @@ t_dim: 2
 
 # diffusion:
 learn_sigma: False
-diffusion_steps: 100
-noise_schedule: "linear"
-timestep_respacing: "ddim100"
+diffusion_steps: 8
+noise_schedule: "vp-sde"
+timestep_respacing: ""
 use_kl: False
 predict_xstart: False
 rescale_timesteps: False
 rescale_learned_sigmas: False
-schedule_sampler: "pair,0.25" # "pair, uniform"
+schedule_sampler: "uniform" #"pair,0.25" # "pair, uniform"
 
 # training:
 # resume
@@ -47,16 +47,16 @@ batch_size: 64
 microbatch: -1  # -1 disables microbatches
 # about losses
 lr_model: 1e-4
-lr_disc: 5e-4
+lr_disc: 1e-4
 lossD_type: "hinge"
-lossG_weight: 0.0
+lossG_weight: inf
 grad_weight: 0.5
 # saving
 ema_rate: '0.9999'
 log_interval: 1000
 save_interval: 10000
-sample_num: 64
-sample_type: ["ddim100", "ddim10"]
+sample_num: 4
+sample_type: ["ddim8", "ddim4"]
 # etc
 fp16_scale_growth: 0.001
 weight_decay: 0.0
