@@ -145,7 +145,7 @@ class GaussianDiffusion:
         assert (betas > 0).all() and (betas <= 1).all()
 
         self.num_timesteps = int(betas.shape[0])
-
+        
         alphas = 1.0 - betas
         self.alphas_cumprod = np.cumprod(alphas, axis=0)
         self.alphas_cumprod_prev = np.append(1.0, self.alphas_cumprod[:-1])
@@ -176,6 +176,11 @@ class GaussianDiffusion:
             * np.sqrt(alphas)
             / (1.0 - self.alphas_cumprod)
         )
+        
+        # pndm
+        self.counter = 0
+        self.cur_model_output = 0 
+        self.ets = []
 
     def q_mean_variance(self, x_start, t):
         """
@@ -746,6 +751,7 @@ class GaussianDiffusion:
                 )
                 yield out
                 img = out["sample"]
+
 
     def _vb_terms_bpd(
         self, model, x_start, x_t, t, clip_denoised=True, model_kwargs=None

@@ -266,8 +266,6 @@ class TrainLoop:
             # compute Generation loss and backward
             self.mp_trainer_model.zero_grad()
             
-
-            if dist.get_rank() == 0: breakpoint()
             compute_losses_G = functools.partial(
                 self.diffusion.training_losses_G,
                 self.ddp_model,
