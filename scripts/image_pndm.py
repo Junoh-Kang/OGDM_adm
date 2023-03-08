@@ -52,12 +52,12 @@ def main():
 
     # device = th.device(args.device)
     args, cfg = create_argparser_and_config()
-    dist_util.setup_dist(args)
+    dist_util.setup_dist(args)    
 
-    schedule = Schedule(args, {"type":"linear", 
+    schedule = Schedule(args, {"type":"linear",
                                "beta_start": 0.0001,
                                "beta_end": 0.02, 
-                               "diffusion_step": 1000},
+                               "diffusion_step": args.diffusion_steps},
                                dist_util.dev())
 
     model = create_model(
