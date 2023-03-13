@@ -2,7 +2,7 @@
 log_dir: './logs'
 project: "test"
 exp: "00_test"
-log: []
+log: ["schedule_sampler", "lossG_weight"]
 
 # data:
 data_dir: "./data/celeba_64"

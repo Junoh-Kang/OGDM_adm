@@ -440,6 +440,14 @@ def mpi_weighted_mean(comm, local_name2valcount):
     else:
         return {}
 
+def short(item):
+    if item == "lossG_weight":
+        return "G="
+    elif item == "schedule_sampler":
+        return ""
+    return item + "="
+
+
 def configure(dir='./logs', project='', exp='', config=None,
               format_strs=None, comm=None, log_suffix=""):
     """
@@ -449,9 +457,9 @@ def configure(dir='./logs', project='', exp='', config=None,
     exp_name = exp + "@"
     l = []
     for item in config["log"]:
-        l.append(item + f"={config[item]}")
+        l.append(short(item) + f"{config[item]}")
     exp_name += ','.join(l)
-    exp_name += datetime.datetime.now(tz=KST).strftime("|%Y-%m-%d-%H-%M-%S-%f")
+    exp_name += datetime.datetime.now(tz=KST).strftime(":%Y-%m-%d-%H-%M-%S-%f")
     
     dir = osp.join(dir, project, exp_name,)
     assert isinstance(dir, str)
