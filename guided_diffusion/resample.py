@@ -17,8 +17,10 @@ def create_named_schedule_sampler(name, diffusion):
         return UniformSampler(diffusion)
     elif name == "loss_aware":
         return LossSecondMomentResampler(diffusion)
-    elif name.startswith("pair"):
-        return eval("PairSampler(diffusion, ratio=" + name.split(",")[-1] + ")")
+    elif name.startswith("pair_T"):
+        return eval("PairSampler_T(diffusion, ratio=" + name.split(",")[-1] + ")")
+    elif name.startswith("pair_t"):
+        return eval("PairSampler_t(diffusion, ratio=" + name.split(",")[-1] + ")")
     else:
         raise NotImplementedError(f"unknown schedule sampler: {name}")
 
@@ -76,7 +78,7 @@ class _UniformSampler(ScheduleSampler):
     def weights(self):
         return self._weights
 
-class PairSampler():
+class PairSampler_T():
     def __init__(self, diffusion, ratio=0):
         self.diffusion = diffusion
         self.ratio = ratio
@@ -86,7 +88,23 @@ class PairSampler():
         ts, weights = sampler.sample(batch_size, device)
         s = []
         for t in ts.cpu().numpy():
-            s_max = int(min(self.diffusion.num_timesteps * self.ratio, t)) + 1
+            s_max = min(int(self.ratio * self.diffusion.num_timesteps), t) + 1
+            tmp, _ = _UniformSampler(s_max).sample(1, device)
+            s.append(tmp)
+        s = th.cat(s).long().to(device)
+        return ts, weights, s
+
+class PairSampler_t():
+    def __init__(self, diffusion, ratio=0):
+        self.diffusion = diffusion
+        self.ratio = ratio
+
+    def sample(self, batch_size, device):
+        sampler = _UniformSampler(self.diffusion.num_timesteps)
+        ts, weights = sampler.sample(batch_size, device)
+        s = []
+        for t in ts.cpu().numpy():
+            s_max = int(self.ratio * t) + 1
             tmp, _ = _UniformSampler(s_max).sample(1, device)
             s.append(tmp)
         s = th.cat(s).long().to(device)

@@ -16,7 +16,7 @@ import torchvision
 from . import dist_util, logger
 from .fp16_util import MixedPrecisionTrainer
 from .nn import update_ema
-from .resample import LossAwareSampler, UniformSampler, PairSampler
+from .resample import LossAwareSampler, UniformSampler, PairSampler_T, PairSampler_t
 from .script_util import create_gaussian_diffusion
 
 import time
