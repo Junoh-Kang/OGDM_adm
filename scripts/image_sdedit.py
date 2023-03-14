@@ -13,6 +13,7 @@ import torch as th
 import torch.distributed as dist
 from torch.nn.parallel.distributed import DistributedDataParallel as DDP
 
+from guided_diffusion.image_datasets import load_data
 from guided_diffusion import dist_util, logger
 from guided_diffusion.script_util import (
     diffusion_defaults, model_defaults, discriminator_defaults,
@@ -47,42 +48,51 @@ def main():
         ddp_model = model
     ddp_model.eval()
     
+    #get ref dir
+    data = load_data(
+        data_dir=args.data_dir,
+        batch_size=args.batch_size,
+        image_size=args.image_size,
+        class_cond=args.class_cond,
+    )
+    
     #set sampling methods
     size = [args.batch_size, 3, args.image_size, args.image_size]
     diffusion_kwargs = args_to_dict(args, diffusion_defaults().keys())
-    
+
     args.sample_type = args.sampler.split(",")
-    
     for sample_type in args.sample_type:
         #sample method
         diffusion_kwargs['timestep_respacing'] = sample_type
         try:
-            if sample_type.startswith("ddim"):
-                sample_fn = create_gaussian_diffusion(**diffusion_kwargs).ddim_sample_loop
-            else:
-                sample_type = "ddpm" + str(sample_type)
-                sample_fn = create_gaussian_diffusion(**diffusion_kwargs).p_sample_loop
+            sample_diffusion = create_gaussian_diffusion(**diffusion_kwargs)
         except:
             continue
+    
+    
         #sample
         if dist.get_rank() == 0:
             start = time.time()
             print(f"sampling {sample_type}")
         
-        folder = f"{args.model_path}/fid/{args.pt_name}/{sample_type}"
+        folder = f"{args.model_path}/fid/{args.pt_name}/sdedit_t0={args.t}_{sample_type}"
         os.makedirs(folder, exist_ok=True)
         num_samples = args.num_samples
         num_sampled = 0
         all_images = []
         with th.no_grad():
-            # while num_sampled < args.num_samples:  
-            #     sample = sample_fn(ddp_model, (min(size[0], args.num_samples - num_sampled), *size[1:]),clip_denoised=args.clip_denoised,)        
             while len(all_images) * size[0] < num_samples:                
-                sample = sample_fn(
-                    ddp_model, 
-                    (min(size[0], num_samples - len(all_images) * size[0]), *size[1:]),
+                batch, cond, idx = next(data)
+                t0 = int(args.t * sample_diffusion.num_timesteps)
+                t = th.tensor([t0] * size[0], device=dist_util.dev())
+                batch_t = sample_diffusion.q_sample(batch.to(dist_util.dev()), t)
+                sample = sample_diffusion.ddim_sample_loop(
+                    model=ddp_model,
+                    shape=(min(size[0], num_samples - len(all_images) * size[0]), *size[1:]),
                     clip_denoised=args.clip_denoised,
+                    indices=list(range(t0))[::-1]
                 )
+                
                 sample = ((sample + 1) * 127.5).clamp(0, 255).to(th.uint8)
                 sample = sample.contiguous()
                 gathered_samples = [th.zeros_like(sample) for _ in range(dist.get_world_size())]
@@ -114,7 +124,8 @@ def create_argparser_and_config():
     tmp_parser.add_argument('--pt_name', type=str)
     tmp_parser.add_argument('--clip_denoised', type=bool, default=True)
     tmp_parser.add_argument('--num_samples', type=int, default=50000)
-    tmp_parser.add_argument('--sampler', type=str)
+    tmp_parser.add_argument('--sampler', type=str, default="ddim100")
+    tmp_parser.add_argument('--t', type=float, default=0.1)
 
     tmp_parser.add_argument("--local_rank", type=int) # For DDP
     tmp_parser.add_argument("--rank", type=int) # For DDP
@@ -134,7 +145,8 @@ def create_argparser_and_config():
     parser.add_argument('--pt_name', type=str)
     parser.add_argument('--clip_denoised', type=bool, default=True)
     parser.add_argument('--num_samples', type=int, default=50000)
-    parser.add_argument('--sampler', type=str)
+    parser.add_argument('--sampler', type=str, default="ddim100" )
+    parser.add_argument('--t', type=float, default=0.1)
     
     parser.add_argument("--local_rank", type=int) # For DDP
     parser.add_argument("--rank", type=int) # For DDP

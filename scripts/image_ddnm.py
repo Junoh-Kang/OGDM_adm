@@ -50,7 +50,7 @@ def main():
     #set sampling methods
     size = [args.batch_size, 3, args.image_size, args.image_size]
     diffusion_kwargs = args_to_dict(args, diffusion_defaults().keys())
-    
+
     args.sample_type = args.sampler.split(",")
     
     for sample_type in args.sample_type:
