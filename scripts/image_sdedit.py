@@ -126,6 +126,7 @@ def create_argparser_and_config():
     tmp_parser.add_argument('--num_samples', type=int, default=50000)
     tmp_parser.add_argument('--sampler', type=str, default="ddim100")
     tmp_parser.add_argument('--t', type=float, default=0.1)
+    tmp_parser.add_argument('--deg_type', type=str)
 
     tmp_parser.add_argument("--local_rank", type=int) # For DDP
     tmp_parser.add_argument("--rank", type=int) # For DDP
@@ -147,6 +148,7 @@ def create_argparser_and_config():
     parser.add_argument('--num_samples', type=int, default=50000)
     parser.add_argument('--sampler', type=str, default="ddim100" )
     parser.add_argument('--t', type=float, default=0.1)
+    parser.add_argument('--deg_type', type=str)
     
     parser.add_argument("--local_rank", type=int) # For DDP
     parser.add_argument("--rank", type=int) # For DDP
