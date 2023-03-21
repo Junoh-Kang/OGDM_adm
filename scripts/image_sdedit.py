@@ -75,7 +75,7 @@ def main():
             start = time.time()
             print(f"sampling {sample_type}")
         
-        folder = f"{args.model_path}/fid/{args.pt_name}/sdedit_t0={args.t}_{sample_type}"
+        folder = f"{args.model_path}/fid/{args.pt_name}/{args.task}/sdedit_t0={args.t}_{sample_type}"
         os.makedirs(folder, exist_ok=True)
         num_samples = args.num_samples
         num_sampled = 0
@@ -85,13 +85,16 @@ def main():
                 batch, cond, idx = next(data)
                 t0 = int(args.t * sample_diffusion.num_timesteps)
                 t = th.tensor([t0] * size[0], device=dist_util.dev())
-                batch_t = sample_diffusion.q_sample(batch.to(dist_util.dev()), t)
+                batch_t = sample_diffusion.q_sample(batch.to(dist_util.dev()), t).clamp(-1,1)
+                # breakpoint()
                 sample = sample_diffusion.ddim_sample_loop(
                     model=ddp_model,
                     shape=(min(size[0], num_samples - len(all_images) * size[0]), *size[1:]),
                     clip_denoised=args.clip_denoised,
-                    indices=list(range(t0))[::-1]
+                    noise=batch_t,
+                    indices=list(range(min(1,t0)))[::-1],
                 )
+                # breakpoint()
                 
                 sample = ((sample + 1) * 127.5).clamp(0, 255).to(th.uint8)
                 sample = sample.contiguous()
@@ -126,7 +129,7 @@ def create_argparser_and_config():
     tmp_parser.add_argument('--num_samples', type=int, default=50000)
     tmp_parser.add_argument('--sampler', type=str, default="ddim100")
     tmp_parser.add_argument('--t', type=float, default=0.1)
-    tmp_parser.add_argument('--deg_type', type=str)
+    tmp_parser.add_argument('--task', type=str)
 
     tmp_parser.add_argument("--local_rank", type=int) # For DDP
     tmp_parser.add_argument("--rank", type=int) # For DDP
@@ -148,7 +151,7 @@ def create_argparser_and_config():
     parser.add_argument('--num_samples', type=int, default=50000)
     parser.add_argument('--sampler', type=str, default="ddim100" )
     parser.add_argument('--t', type=float, default=0.1)
-    parser.add_argument('--deg_type', type=str)
+    parser.add_argument('--task', type=str)
     
     parser.add_argument("--local_rank", type=int) # For DDP
     parser.add_argument("--rank", type=int) # For DDP

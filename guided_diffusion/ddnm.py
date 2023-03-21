@@ -88,12 +88,18 @@ class Diffusion(object):
             )
         self.device = device
 
-        self.model_var_type = config.model.var_type
+        # self.model_var_type = config.model.var_type
+        # betas = get_beta_schedule(
+        #     beta_schedule=config.diffusion.beta_schedule,
+        #     beta_start=config.diffusion.beta_start,
+        #     beta_end=config.diffusion.beta_end,
+        #     num_diffusion_timesteps=config.diffusion.num_diffusion_timesteps,
+        # )
         betas = get_beta_schedule(
-            beta_schedule=config.diffusion.beta_schedule,
-            beta_start=config.diffusion.beta_start,
-            beta_end=config.diffusion.beta_end,
-            num_diffusion_timesteps=config.diffusion.num_diffusion_timesteps,
+            beta_schedule="linear",
+            beta_start=0.0001,
+            beta_end=0.02,
+            num_diffusion_timesteps=1000,
         )
         betas = self.betas = torch.from_numpy(betas).float().to(self.device)
         self.num_timesteps = betas.shape[0]
@@ -107,89 +113,14 @@ class Diffusion(object):
         posterior_variance = (
             betas * (1.0 - alphas_cumprod_prev) / (1.0 - alphas_cumprod)
         )
-        if self.model_var_type == "fixedlarge":
-            self.logvar = betas.log()
-        elif self.model_var_type == "fixedsmall":
-            self.logvar = posterior_variance.clamp(min=1e-20).log()
+        self.logvar = betas.log()
+        # if self.model_var_type == "fixedlarge":
+        #     self.logvar = betas.log()
+        # elif self.model_var_type == "fixedsmall":
+        #     self.logvar = posterior_variance.clamp(min=1e-20).log()
 
-    def sample(self, simplified):
+    def sample(self, model, simplified):
         cls_fn = None
-        if self.config.model.type == 'simple':
-            model = Model(self.config)
-
-            if self.config.data.dataset == "CIFAR10":
-                name = "cifar10"
-            elif self.config.data.dataset == "LSUN":
-                name = f"lsun_{self.config.data.category}"
-            elif self.config.data.dataset == 'CelebA_HQ':
-                name = 'celeba_hq'
-            else:
-                raise ValueError
-            if name != 'celeba_hq':
-                ckpt = get_ckpt_path(f"ema_{name}", prefix=self.args.exp)
-                print("Loading checkpoint {}".format(ckpt))
-            elif name == 'celeba_hq':
-                ckpt = os.path.join(self.args.exp, "logs/celeba/celeba_hq.ckpt")
-                if not os.path.exists(ckpt):
-                    download('https://image-editing-test-12345.s3-us-west-2.amazonaws.com/checkpoints/celeba_hq.ckpt',
-                             ckpt)
-            else:
-                raise ValueError
-            model.load_state_dict(torch.load(ckpt, map_location=self.device))
-            model.to(self.device)
-            model = torch.nn.DataParallel(model)
-
-        elif self.config.model.type == 'openai':
-            config_dict = vars(self.config.model)
-            model = create_model(**config_dict)
-            if self.config.model.use_fp16:
-                model.convert_to_fp16()
-            if self.config.model.class_cond:
-                ckpt = os.path.join(self.args.exp, 'logs/imagenet/%dx%d_diffusion.pt' % (
-                self.config.data.image_size, self.config.data.image_size))
-                if not os.path.exists(ckpt):
-                    download(
-                        'https://openaipublic.blob.core.windows.net/diffusion/jul-2021/%dx%d_diffusion_uncond.pt' % (
-                        self.config.data.image_size, self.config.data.image_size), ckpt)
-            else:
-                ckpt = os.path.join(self.args.exp, "logs/imagenet/256x256_diffusion_uncond.pt")
-                if not os.path.exists(ckpt):
-                    download(
-                        'https://openaipublic.blob.core.windows.net/diffusion/jul-2021/256x256_diffusion_uncond.pt',
-                        ckpt)
-
-            model.load_state_dict(torch.load(ckpt, map_location=self.device))
-            model.to(self.device)
-            model.eval()
-            model = torch.nn.DataParallel(model)
-
-            if self.config.model.class_cond:
-                ckpt = os.path.join(self.args.exp, 'logs/imagenet/%dx%d_classifier.pt' % (
-                self.config.data.image_size, self.config.data.image_size))
-                if not os.path.exists(ckpt):
-                    image_size = self.config.data.image_size
-                    download(
-                        'https://openaipublic.blob.core.windows.net/diffusion/jul-2021/%dx%d_classifier.pt' % image_size,
-                        ckpt)
-                classifier = create_classifier(**args_to_dict(self.config.classifier, classifier_defaults().keys()))
-                classifier.load_state_dict(torch.load(ckpt, map_location=self.device))
-                classifier.to(self.device)
-                if self.config.classifier.classifier_use_fp16:
-                    classifier.convert_to_fp16()
-                classifier.eval()
-                classifier = torch.nn.DataParallel(classifier)
-
-                import torch.nn.functional as F
-                def cond_fn(x, t, y):
-                    with torch.enable_grad():
-                        x_in = x.detach().requires_grad_(True)
-                        logits = classifier(x_in, t)
-                        log_probs = F.log_softmax(logits, dim=-1)
-                        selected = log_probs[range(len(logits)), y.view(-1)]
-                        return torch.autograd.grad(selected.sum(), x_in)[0] * self.config.classifier.classifier_scale
-
-                cls_fn = cond_fn
-
         if simplified:
             print('Run Simplified DDNM, without SVD.',
                   f'{self.config.time_travel.T_sampling} sampling steps.',

@@ -1,6 +1,6 @@
 # project:
 log_dir: './logs'
-project: "lgai_celeba_64"
+project: "celeba_64"
 exp: "05_sampler"
 log: ["schedule_sampler", "lossG_weight"]
 
@@ -31,7 +31,7 @@ t_dim: 2
 learn_sigma: False
 diffusion_steps: 1000
 noise_schedule: "linear"
-timestep_respacing: "ddim1000"
+timestep_respacing: ""
 use_kl: False
 predict_xstart: False
 rescale_timesteps: False
@@ -54,8 +54,8 @@ grad_weight: 0.5
 # saving
 ema_rate: '0.9999'
 log_interval: 5000
-save_interval: 10000
-sample_num: 32
+save_interval: 100000
+sample_num: 64
 sample_type: ["ddim10","ddim5"]
 # etc
 fp16_scale_growth: 0.001
