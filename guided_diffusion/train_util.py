@@ -257,7 +257,7 @@ class TrainLoop:
             }
             last_batch = (i + self.microbatch) >= batch.shape[0]
 
-            if isinstance(self.schedule_sampler, PairSampler):
+            if isinstance(self.schedule_sampler, PairSampler_T) or isinstance(self.schedule_sampler, PairSampler_t):
                 t, weights, s = self.schedule_sampler.sample(micro.shape[0], dist_util.dev())
             else:
                 t, weights = self.schedule_sampler.sample(micro.shape[0], dist_util.dev())
