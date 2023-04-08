@@ -1,7 +1,7 @@
 # project:
 log_dir: './logs'
 project: "celeba_64"
-exp: "05_sampler"
+exp: "06_sampler"
 log: ["schedule_sampler", "lossG_weight"]
 
 # data:
