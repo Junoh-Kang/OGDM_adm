@@ -145,25 +145,12 @@ class TrainLoop:
             self.opt_model.load_state_dict(th.load(f"{project}/model/opt_{resume_step}.pt"))
             if self.discriminator:
                 self.opt_disc.load_state_dict(th.load(f"{project}/disc/opt_{resume_step}.pt"))
-            # load ema 
-            # self.ema_params = [
-            #     (th.load(f"{project}/model/ema_{rate}_{resume_step}.pt")).values()
-            #     for rate in self.ema_rate
-            # ]
         else:        
             self.ema_params = [
                 copy.deepcopy(self.mp_trainer_model.master_params)
                 for _ in range(len(self.ema_rate))
             ]
 
-        # if self.resume_step:
-        #     self._load_optimizer_state()
-        #     # Model was resumed, either due to a restart or a checkpoint
-        #     # being specified at the command line.
-        #     self.ema_params = [
-        #         self._load_ema_parameters(rate) for rate in self.ema_rate
-        #     ]
-        # else:
 
         if th.cuda.is_available():
             self.use_ddp = True
@@ -195,62 +182,6 @@ class TrainLoop:
             self.use_ddp = False
             self.ddp_model = self.model
             self.ddp_discriminator = self.discriminator
-
-    # def _load_and_sync_parameters(self):
-    #     resume_checkpoint = find_resume_checkpoint() or self.resume_checkpoint
-
-    #     if resume_checkpoint:
-    #         self.resume_step = parse_resume_step_from_filename(resume_checkpoint)
-    #         if dist.get_rank() == 0:
-    #             logger.log(f"loading model from checkpoint: {resume_checkpoint}...")
-    #             self.model.load_state_dict(
-    #                 dist_util.load_state_dict(
-    #                     resume_checkpoint, map_location=dist_util.dev()
-    #                 )
-    #             )
-    #             self.discriminator.load_state_dict(
-    #                 dist_util.load_state_dict(
-    #                     resume_checkpoint, map_location=dist_util.dev()
-    #                 )
-    #             )
-    #     dist_util.sync_params(self.model.parameters())
-    #     if self.discriminator:
-    #         dist_util.sync_params(self.discriminator.parameters())
-
-    # def _load_ema_parameters(self, rate):
-    #     ema_params = copy.deepcopy(self.mp_trainer_model.master_params)
-
-    #     main_checkpoint = find_resume_checkpoint() or self.resume_checkpoint
-    #     ema_checkpoint = find_ema_checkpoint(main_checkpoint, self.resume_step, rate)
-    #     if ema_checkpoint:
-    #         if dist.get_rank() == 0:
-    #             logger.log(f"loading EMA from checkpoint: {ema_checkpoint}...")
-    #             state_dict = dist_util.load_state_dict(
-    #                 ema_checkpoint, map_location=dist_util.dev()
-    #             )
-    #             ema_params = self.mp_trainer_model.state_dict_to_master_params(state_dict)
-
-    #     dist_util.sync_params(ema_params)
-    #     return ema_params
-
-    # def _load_optimizer_state(self):
-    #     main_checkpoint = find_resume_checkpoint() or self.resume_checkpoint
-    #     opt_checkpoint = bf.join(
-    #         bf.dirname(main_checkpoint), f"opt{self.resume_step:06}.pt"
-    #     )
-    #     if bf.exists(opt_checkpoint):
-    #         logger.log(f"loading optimizer state from checkpoint: {opt_checkpoint}")
-    #         state_dict = dist_util.load_state_dict(
-    #             opt_checkpoint, map_location=dist_util.dev()
-    #         )
-    #         self.opt_model.load_state_dict(state_dict)
-    #     # FIXME(junoh)
-    #     if bf.exists(opt_checkpoint):
-    #         logger.log(f"loading optimizer state from checkpoint: {opt_checkpoint}")
-    #         state_dict = dist_util.load_state_dict(
-    #             opt_checkpoint, map_location=dist_util.dev()
-    #         )
-    #         self.opt_model.load_state_dict(state_dict)
 
     def run_loop(self):
         while (

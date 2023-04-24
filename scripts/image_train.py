@@ -23,7 +23,7 @@ def main():
     
     args, cfg = create_argparser_and_config()
     dist_util.setup_dist(args)
-    
+
     seed = dist.get_rank()
     th.manual_seed(seed)
     np.random.seed(seed)
@@ -111,6 +111,10 @@ def create_argparser_and_config():
     add_dict_to_argparser(tmp_parser, tmp)
     tmp_args = tmp_parser.parse_args()
 
+    if tmp_args.resume_checkpoint:
+        import glob
+        tmp_args.config = glob.glob(f"{tmp_args.resume_checkpoint[:-7]}/config.yaml")[0]
+    
     parser = argparse.ArgumentParser()
     parser.add_argument("--local_rank", type=int) # For DDP
     parser.add_argument("--rank", type=int) # For DDP
