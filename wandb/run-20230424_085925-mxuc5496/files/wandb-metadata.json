@@ -1,0 +1,265 @@
+{
+    "os": "Linux-5.15.0-69-generic-x86_64-with-glibc2.10",
+    "python": "3.8.8",
+    "heartbeatAt": "2023-04-24T08:59:26.831512",
+    "startedAt": "2023-04-24T08:59:25.056757",
+    "docker": null,
+    "cuda": null,
+    "args": [
+        "--local_rank=0",
+        "--config",
+        "configs/_default.yaml",
+        "--batch_size",
+        "4",
+        "--resume_checkpoint",
+        "logs/test/test@:2023-04-24-17-08-35-334124,000100"
+    ],
+    "state": "running",
+    "program": "scripts/image_train.py",
+    "codePath": "scripts/image_train.py",
+    "git": {
+        "remote": "https://github.com/Junoh-Kang/adm.git",
+        "commit": "4c68530144ff2e1d23ee8be00a5d6ac82955681c"
+    },
+    "email": null,
+    "root": "/home/junoh/2022_DM/adm",
+    "host": "junoh-pc",
+    "username": "root",
+    "executable": "/opt/conda/bin/python",
+    "cpu_count": 20,
+    "cpu_count_logical": 40,
+    "cpu_freq": {
+        "current": 1249.9540249999998,
+        "min": 1200.0,
+        "max": 3100.0
+    },
+    "cpu_freq_per_core": [
+        {
+            "current": 1198.329,
+            "min": 1200.0,
+            "max": 3100.0
+        },
+        {
+            "current": 1197.833,
+            "min": 1200.0,
+            "max": 3100.0
+        },
+        {
+            "current": 1197.399,
+            "min": 1200.0,
+            "max": 3100.0
+        },
+        {
+            "current": 1199.788,
+            "min": 1200.0,
+            "max": 3100.0
+        },
+        {
+            "current": 1200.703,
+            "min": 1200.0,
+            "max": 3100.0
+        },
+        {
+            "current": 1199.821,
+            "min": 1200.0,
+            "max": 3100.0
+        },
+        {
+            "current": 1829.918,
+            "min": 1200.0,
+            "max": 3100.0
+        },
+        {
+            "current": 1199.197,
+            "min": 1200.0,
+            "max": 3100.0
+        },
+        {
+            "current": 1199.54,
+            "min": 1200.0,
+            "max": 3100.0
+        },
+        {
+            "current": 1364.297,
+            "min": 1200.0,
+            "max": 3100.0
+        },
+        {
+            "current": 1199.245,
+            "min": 1200.0,
+            "max": 3100.0
+        },
+        {
+            "current": 1199.581,
+            "min": 1200.0,
+            "max": 3100.0
+        },
+        {
+            "current": 1199.47,
+            "min": 1200.0,
+            "max": 3100.0
+        },
+        {
+            "current": 1200.297,
+            "min": 1200.0,
+            "max": 3100.0
+        },
+        {
+            "current": 1199.244,
+            "min": 1200.0,
+            "max": 3100.0
+        },
+        {
+            "current": 1198.839,
+            "min": 1200.0,
+            "max": 3100.0
+        },
+        {
+            "current": 1199.814,
+            "min": 1200.0,
+            "max": 3100.0
+        },
+        {
+            "current": 1199.351,
+            "min": 1200.0,
+            "max": 3100.0
+        },
+        {
+            "current": 1199.134,
+            "min": 1200.0,
+            "max": 3100.0
+        },
+        {
+            "current": 1199.464,
+            "min": 1200.0,
+            "max": 3100.0
+        },
+        {
+            "current": 1198.715,
+            "min": 1200.0,
+            "max": 3100.0
+        },
+        {
+            "current": 1198.956,
+            "min": 1200.0,
+            "max": 3100.0
+        },
+        {
+            "current": 1301.591,
+            "min": 1200.0,
+            "max": 3100.0
+        },
+        {
+            "current": 1198.353,
+            "min": 1200.0,
+            "max": 3100.0
+        },
+        {
+            "current": 1197.735,
+            "min": 1200.0,
+            "max": 3100.0
+        },
+        {
+            "current": 1198.244,
+            "min": 1200.0,
+            "max": 3100.0
+        },
+        {
+            "current": 1370.689,
+            "min": 1200.0,
+            "max": 3100.0
+        },
+        {
+            "current": 1197.749,
+            "min": 1200.0,
+            "max": 3100.0
+        },
+        {
+            "current": 1197.653,
+            "min": 1200.0,
+            "max": 3100.0
+        },
+        {
+            "current": 1246.856,
+            "min": 1200.0,
+            "max": 3100.0
+        },
+        {
+            "current": 1198.188,
+            "min": 1200.0,
+            "max": 3100.0
+        },
+        {
+            "current": 1198.226,
+            "min": 1200.0,
+            "max": 3100.0
+        },
+        {
+            "current": 1197.714,
+            "min": 1200.0,
+            "max": 3100.0
+        },
+        {
+            "current": 1197.575,
+            "min": 1200.0,
+            "max": 3100.0
+        },
+        {
+            "current": 1198.112,
+            "min": 1200.0,
+            "max": 3100.0
+        },
+        {
+            "current": 1197.48,
+            "min": 1200.0,
+            "max": 3100.0
+        },
+        {
+            "current": 1198.183,
+            "min": 1200.0,
+            "max": 3100.0
+        },
+        {
+            "current": 1198.446,
+            "min": 1200.0,
+            "max": 3100.0
+        },
+        {
+            "current": 1198.241,
+            "min": 1200.0,
+            "max": 3100.0
+        },
+        {
+            "current": 1197.99,
+            "min": 1200.0,
+            "max": 3100.0
+        }
+    ],
+    "disk": {
+        "total": 467.8895797729492,
+        "used": 87.78362274169922
+    },
+    "gpu": "NVIDIA TITAN Xp",
+    "gpu_count": 4,
+    "gpu_devices": [
+        {
+            "name": "NVIDIA TITAN Xp",
+            "memory_total": 12884901888
+        },
+        {
+            "name": "NVIDIA TITAN Xp",
+            "memory_total": 12884901888
+        },
+        {
+            "name": "NVIDIA TITAN Xp",
+            "memory_total": 12884901888
+        },
+        {
+            "name": "NVIDIA TITAN Xp",
+            "memory_total": 12884901888
+        }
+    ],
+    "memory": {
+        "total": 125.7762565612793
+    }
+}

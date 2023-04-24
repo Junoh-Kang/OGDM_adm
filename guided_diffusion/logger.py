@@ -449,31 +449,41 @@ def short(item):
 
 
 def configure(dir='./logs', project='', exp='', config=None,
-              format_strs=None, comm=None, log_suffix=""):
+              format_strs=None, comm=None, log_suffix="", 
+              resume_checkpoint=""):
     """
     If comm is provided, average all numerical stats across that comm
     """
-    KST = datetime.timezone(datetime.timedelta(hours=9))
-    exp_name = exp + "@"
-    l = []
-    for item in config["log"]:
-        l.append(short(item) + f"{config[item]}")
-    exp_name += ','.join(l)
-    exp_name += datetime.datetime.now(tz=KST).strftime(":%Y-%m-%d-%H-%M-%S-%f")
-    
-    dir = osp.join(dir, project, exp_name,)
-    assert isinstance(dir, str)
+    resume = True if resume_checkpoint else False
+    if resume:
+        dir = resume_checkpoint[:-7]
+        exp_name = dir.split("/")[-1]
+    else:
+        KST = datetime.timezone(datetime.timedelta(hours=9))
+        exp_name = exp + "@"
+        l = []
+        for item in config["log"]:
+            l.append(short(item) + f"{config[item]}")
+        exp_name += ','.join(l)
+        exp_name += datetime.datetime.now(tz=KST).strftime(":%Y-%m-%d-%H-%M-%S-%f")
+        
+        dir = osp.join(dir, project, exp_name,)
+        assert isinstance(dir, str)
 
     dir = os.path.expanduser(dir)
     os.makedirs(os.path.expanduser(dir), exist_ok=True)
     
-    with open(osp.join(dir, 'config.yaml'), 'w') as f:
-        yaml.dump(config, f, default_flow_style=False)
-
-    if dist.get_rank() == 0:
+    if resume:
+        import glob
+        run_id = glob.glob(f"{dir}/wandb/run*")[0].split("/")[-1].split("-")[-1]
+        wandb.init(dir=dir, config=config, 
+                   entity="lgai", project="adm_"+project, name=exp_name,
+                   id=run_id, resume="must")
+    else:
+        with open(osp.join(dir, 'config.yaml'), 'w') as f:
+            yaml.dump(config, f, default_flow_style=False)
         wandb.init(dir=dir, config=config,
-                entity="lgai", project="adm_"+project, name=exp_name, 
-                )
+                   entity="lgai", project="adm_"+project, name=exp_name,)
 
     rank = get_rank_without_mpi_import()
     if rank > 0:

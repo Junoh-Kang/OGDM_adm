@@ -30,12 +30,13 @@ def main():
     
     if dist.get_rank() == 0:
         logger.configure(dir=args.log_dir, 
-                         project=args.project, exp=args.exp, config=cfg)
+                         project=args.project, exp=args.exp, config=cfg, 
+                         resume_checkpoint=args.resume_checkpoint)
         if args.use_discriminator:
             logger.log("creating model, discriminator and diffusion...")
         else:
             logger.log("creating model and diffusion...")
-
+    
     model = create_model(
         **args_to_dict(args, model_defaults().keys())
     ).to(dist_util.dev())

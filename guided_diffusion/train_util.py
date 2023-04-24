@@ -350,10 +350,10 @@ class TrainLoop:
             # log losses
             if dist.get_rank() == 0:
                 wandb.log({f"Train/Samples": 
-                        (self.step + self.resume_step + 1) * self.global_batch},
-                        step=self.step)
+                        (self.step + self.resume_step) * self.global_batch},
+                        step=self.step + self.resume_step)
                 log_loss_dict(
-                    self.step,
+                    self.step + self.resume_step,
                     self.diffusion, t, {k: v * weights for k, v in losses.items()}
                 )
 
@@ -372,7 +372,7 @@ class TrainLoop:
 
     def log_step(self):
         logger.logkv("step", self.step + self.resume_step)
-        logger.logkv("samples", (self.step + self.resume_step + 1) * self.global_batch)
+        logger.logkv("samples", (self.step + self.resume_step) * self.global_batch)
         logger.logkv(f"time per {self.log_interval}", time.time() - self.run_time)
 
     def save(self):
@@ -470,7 +470,8 @@ class TrainLoop:
                 filename = f"samples/model_{sample_type}_{(self.step+self.resume_step):06d}.png"
                 with bf.BlobFile(bf.join(get_blob_logdir(), filename), "wb") as f:
                     Image.fromarray(sample).save(f)
-                wandb.log({f"{sample_type}_model": wandb.Image(sample)})
+                wandb.log({f"{sample_type}_model": wandb.Image(sample)}, 
+                          step=(self.step + self.resume_step + 1))
             
     def sample_and_save(self, size, sample_fid_num=1000):
         for sample_type in self.sample_type:
