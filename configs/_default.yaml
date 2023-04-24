@@ -56,7 +56,7 @@ ema_rate: '0.9999'
 log_interval: 100
 save_interval: 100
 sample_num: 4
-sample_type: "ddim10"
+sample_type: ["ddim10"]
 # etc
 fp16_scale_growth: 0.001
 weight_decay: 0.0

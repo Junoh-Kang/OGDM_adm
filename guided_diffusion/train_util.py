@@ -103,14 +103,26 @@ class TrainLoop:
             resume_step = self.resume_checkpoint[-6:]
             self.resume_step = int(resume_step)
 
-            # load model
-            print("loading model...")
+            # load ema
+            print("loading ema...")
+            self.ema_params = []
+            for rate in self.ema_rate:
+                self.model.load_state_dict(th.load(f"{project}/model/ema_{rate}_{resume_step}.pt"))
+                self.mp_trainer_model = MixedPrecisionTrainer(
+                    model=self.model,
+                    use_fp16=self.use_fp16,
+                    fp16_scale_growth=fp16_scale_growth,
+                )
+                self.ema_params.append(copy.deepcopy(self.mp_trainer_model.master_params))
+
+            print("loading model...")            
             self.model.load_state_dict(th.load(f"{project}/model/model_{resume_step}.pt"))
             # load disc
             if self.discriminator:
                 print("loading discriminator...")
                 self.discriminator.load_state_dict(th.load(f"{project}/disc/disc_{resume_step}.pt"))
         
+        print("finished loading")
         self.mp_trainer_model = MixedPrecisionTrainer(
             model=self.model,
             use_fp16=self.use_fp16,
@@ -134,10 +146,10 @@ class TrainLoop:
             if self.discriminator:
                 self.opt_disc.load_state_dict(th.load(f"{project}/disc/opt_{resume_step}.pt"))
             # load ema 
-            self.ema_params = [
-                (th.load(f"{project}/model/ema_{rate}_{resume_step}.pt")).values()
-                for rate in self.ema_rate
-            ]
+            # self.ema_params = [
+            #     (th.load(f"{project}/model/ema_{rate}_{resume_step}.pt")).values()
+            #     for rate in self.ema_rate
+            # ]
         else:        
             self.ema_params = [
                 copy.deepcopy(self.mp_trainer_model.master_params)
@@ -350,10 +362,10 @@ class TrainLoop:
             # log losses
             if dist.get_rank() == 0:
                 wandb.log({f"Train/Samples": 
-                        (self.step + self.resume_step) * self.global_batch},
-                        step=self.step + self.resume_step)
+                        (self.step+self.resume_step) * self.global_batch},
+                        step=self.step+self.resume_step)
                 log_loss_dict(
-                    self.step + self.resume_step,
+                    self.step+self.resume_step,
                     self.diffusion, t, {k: v * weights for k, v in losses.items()}
                 )
 
@@ -471,7 +483,7 @@ class TrainLoop:
                 with bf.BlobFile(bf.join(get_blob_logdir(), filename), "wb") as f:
                     Image.fromarray(sample).save(f)
                 wandb.log({f"{sample_type}_model": wandb.Image(sample)}, 
-                          step=(self.step + self.resume_step + 1))
+                          step=(self.step+self.resume_step))
             
     def sample_and_save(self, size, sample_fid_num=1000):
         for sample_type in self.sample_type:
