@@ -30,7 +30,7 @@ def main():
     
     if dist.get_rank() == 0:
         logger.configure(dir=args.log_dir, 
-                        project=args.project, exp=args.exp, config=cfg)
+                         project=args.project, exp=args.exp, config=cfg)
         if args.use_discriminator:
             logger.log("creating model, discriminator and diffusion...")
         else:

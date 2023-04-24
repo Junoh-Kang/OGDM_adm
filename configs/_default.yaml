@@ -2,7 +2,7 @@
 log_dir: './logs'
 project: "test"
 exp: "test"
-log: ["schedule_sampler", "lossG_weight"]
+log: []
 
 # data:
 data_dir: "./data/celeba_64"
@@ -25,7 +25,7 @@ use_new_attention_order: False
 
 # discriminator:
 use_discriminator: True
-t_dim: 0
+t_dim: 2
 
 # diffusion:
 learn_sigma: False
@@ -53,10 +53,10 @@ lossG_weight: 0.01
 grad_weight: 1.0
 # saving
 ema_rate: '0.9999'
-log_interval: 10
-save_interval: 10000
+log_interval: 100
+save_interval: 500
 sample_num: 8
-sample_type: "ddim200"
+sample_type: "ddim10"
 # etc
 fp16_scale_growth: 0.001
 weight_decay: 0.0
