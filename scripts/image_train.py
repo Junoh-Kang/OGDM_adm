@@ -40,6 +40,8 @@ def main():
     model = create_model(
         **args_to_dict(args, model_defaults().keys())
     ).to(dist_util.dev())
+    if args.finetune:
+        model.load_state_dict(th.load(args.finetune))
 
     if args.use_discriminator:
         discriminator = create_discriminator(
@@ -103,7 +105,8 @@ def create_argparser_and_config():
     tmp_parser.add_argument("--world_size", type=int) # For DDP
     tmp_parser.add_argument("--gpu", type=int) # For DDP
     tmp_parser.add_argument("--dist_url", type=int) # For DDP
-    tmp_parser.add_argument('--config', type=str)
+    tmp_parser.add_argument("--config", type=str)
+    tmp_parser.add_argument("--finetune", type=str)
     try:
         tmp = load_config('./configs/_default.yaml')
     except:
@@ -121,7 +124,8 @@ def create_argparser_and_config():
     parser.add_argument("--world_size", type=int) # For DDP
     parser.add_argument("--gpu", type=int) # For DDP
     parser.add_argument("--dist_url", type=int) # For DDP
-    parser.add_argument('--config', default=tmp_args.config, type=str)
+    parser.add_argument("--config", default=tmp_args.config, type=str)
+    parser.add_argument("--finetune", type=str)
     cfg = load_config(tmp_args.config)
     # check is there any omitted keys
     err = ""
