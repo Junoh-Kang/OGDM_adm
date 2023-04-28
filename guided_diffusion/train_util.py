@@ -310,8 +310,9 @@ class TrainLoop:
         frac_done = (self.step + self.resume_step) / self.lr_anneal_steps
         for param_group in self.opt_model.param_groups:
             param_group["lr"] = self.lr_model * (1 - frac_done)
-        for param_group in self.opt_disc.param_groups:
-            param_group["lr"] = self.lr_disc * (1 - frac_done)
+        if self.ddp_discriminator:
+            for param_group in self.opt_disc.param_groups:
+                param_group["lr"] = self.lr_disc * (1 - frac_done)
 
     def log_step(self):
         logger.logkv("step", self.step + self.resume_step)
