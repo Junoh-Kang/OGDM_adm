@@ -1,0 +1,96 @@
+logs/celeba_64/07_finetune_300K@pair_T,0.15,G=0.0025:2023-04-27-16-50-55-367609/fid/ema_0.9999_005000.pt
+ddim100 :
+ddim50 :
+ddim20 : FID: 6.975609770709724
+ddim10 : FID: 10.8505228955309
+ddim5 :
+logs/celeba_64/07_finetune_300K@pair_T,0.15,G=0.0025:2023-04-27-16-50-55-367609/fid/ema_0.9999_010000.pt
+ddim100 :
+ddim50 :
+ddim20 : FID: 6.465096135291674
+ddim10 : FID: 9.901566312411916
+ddim5 :
+logs/celeba_64/07_finetune_300K@pair_T,0.15,G=0.0025:2023-04-27-16-50-55-367609/fid/ema_0.9999_015000.pt
+ddim100 :
+ddim50 :
+ddim20 : FID: 6.067620390443466
+ddim10 : FID: 9.436548653899422
+ddim5 :
+logs/celeba_64/07_finetune_300K@pair_T,0.15,G=0.0025:2023-04-27-16-50-55-367609/fid/ema_0.9999_020000.pt
+ddim100 :
+ddim50 :
+ddim20 : FID: 6.036107271699223
+ddim10 : FID: 9.21488749937933
+ddim5 :
+logs/celeba_64/07_finetune_300K@pair_T,0.15,G=0.0025:2023-04-27-16-50-55-367609/fid/ema_0.9999_020000.pt
+ddim100 :
+ddim50 :
+ddim20 :
+ddim10 :
+ddim5 :
+logs/celeba_64/07_finetune_300K@pair_T,0.15,G=0.0025:2023-04-27-16-50-55-367609/fid/ema_0.9999_020000.pt
+ddim100 :
+ddim50 :
+ddim20 : FID: 6.036107271699223
+ddim10 : FID: 9.21488749937933
+ddim5 :
+logs/celeba_64/07_finetune_300K@pair_T,0.15,G=0.0025:2023-04-27-16-50-55-367609/fid/ema_0.9999_025000.pt
+ddim100 :
+ddim50 :
+ddim20 : FID: 5.986838136124135
+ddim10 : FID: 9.116707757130115
+ddim5 :
+logs/celeba_64/07_finetune_300K@pair_T,0.15,G=0.0025:2023-04-27-16-50-55-367609/fid/ema_0.9999_0230000.pt
+ddim100 :
+ddim50 :
+ddim20 :
+ddim10 :
+ddim5 :
+logs/celeba_64/07_finetune_300K@pair_T,0.15,G=0.0025:2023-04-27-16-50-55-367609/fid/ema_0.9999_025000.pt
+ddim100 :
+ddim50 :
+ddim20 : FID: 5.986838136124135
+ddim10 : FID: 9.116707757130115
+ddim5 :
+logs/celeba_64/07_finetune_300K@pair_T,0.15,G=0.0025:2023-04-27-16-50-55-367609/fid/ema_0.9999_030000.pt
+ddim100 :
+ddim50 :
+ddim20 : FID: 6.052561702207811
+ddim10 : FID: 9.224643252484043
+ddim5 :
+logs/celeba_64/07_finetune_300K@pair_T,0.20,G=0.001:2023-04-27-16-51-15-813146/fid/ema_0.9999_005000.pt
+ddim100 :
+ddim50 :
+ddim20 : FID: 7.172731921239148
+ddim10 : FID: 10.760259651335929
+ddim5 :
+logs/celeba_64/07_finetune_300K@pair_T,0.20,G=0.001:2023-04-27-16-51-15-813146/fid/ema_0.9999_010000.pt
+ddim100 :
+ddim50 :
+ddim20 : FID: 6.533826623495884
+ddim10 : FID: 9.865048388995831
+ddim5 :
+logs/celeba_64/07_finetune_300K@pair_T,0.20,G=0.001:2023-04-27-16-51-15-813146/fid/ema_0.9999_015000.pt
+ddim100 :
+ddim50 :
+ddim20 : FID: 6.516283879914113
+ddim10 : FID: 9.473427949447228
+ddim5 :
+logs/celeba_64/07_finetune_300K@pair_T,0.20,G=0.001:2023-04-27-16-51-15-813146/fid/ema_0.9999_020000.pt
+ddim100 :
+ddim50 :
+ddim20 : FID: 6.383431451242444
+ddim10 : FID: 9.250853149077187
+ddim5 :
+logs/celeba_64/07_finetune_300K@pair_T,0.20,G=0.001:2023-04-27-16-51-15-813146/fid/ema_0.9999_025000.pt
+ddim100 :
+ddim50 :
+ddim20 : FID: 6.41231906883155
+ddim10 : FID: 9.198316408067626
+ddim5 :
+logs/celeba_64/07_finetune_300K@pair_T,0.20,G=0.001:2023-04-27-16-51-15-813146/fid/ema_0.9999_030000.pt
+ddim100 :
+ddim50 :
+ddim20 : FID: 6.486801713115426
+ddim10 : FID: 9.155530500373231
+ddim5 :
