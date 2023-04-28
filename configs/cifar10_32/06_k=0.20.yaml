@@ -24,7 +24,7 @@ use_fp16: False
 use_new_attention_order: False
 
 # discriminator:
-use_discriminator: False
+use_discriminator: True
 t_dim: 2
 
 # diffusion:
