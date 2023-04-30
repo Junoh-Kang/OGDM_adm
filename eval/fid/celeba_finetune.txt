@@ -112,3 +112,33 @@ ddim50 :
 ddim20 : FID: 5.821038043441149
 ddim10 : FID: 8.053787105616891
 ddim5 :
+logs/celeba_64/07_finetune_300K@pair_T,0.20,G=0.005:2023-04-28-07-38-10-565580/fid/ema_0.9999_020000.pt
+ddim100 :
+ddim50 :
+ddim20 : FID: 5.864074963004214
+ddim10 : FID: 8.031704460903825
+ddim5 :
+logs/celeba_64/07_finetune_300K@pair_T,0.20,G=0.005:2023-04-28-07-38-10-565580/fid/ema_0.9999_025000.pt
+ddim100 :
+ddim50 :
+ddim20 : FID: 6.007306642625565
+ddim10 : FID: 7.972027699844887
+ddim5 :
+logs/celeba_64/07_finetune_300K@pair_T,0.20,G=0.005:2023-04-28-07-38-10-565580/fid/ema_0.9999_030000.pt
+ddim100 :
+ddim50 :
+ddim20 : FID: 6.234612051906879
+ddim10 : FID: 8.232683408371997
+ddim5 :
+logs/celeba_64/07_finetune_300K@pair_T,0.20,G=0.01:2023-04-30-09-58-13-702839/fid/ema_0.9999_005000.pt
+ddim100 :
+ddim50 :
+ddim20 : FID: 6.117651421918538
+ddim10 : FID: 9.48359618749953
+ddim5 :
+logs/celeba_64/07_finetune_300K@pair_T,0.20,G=0.01:2023-04-30-09-58-13-702839/fid/ema_0.9999_010000.pt
+ddim100 :
+ddim50 :
+ddim20 : FID: 5.318963526626533
+ddim10 : FID: 7.907167348100614
+ddim5 :
