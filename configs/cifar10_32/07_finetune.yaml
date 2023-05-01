@@ -60,4 +60,4 @@ sample_type: ["ddim20","ddim10"]
 # etc
 fp16_scale_growth: 0.001
 weight_decay: 0.0
-lr_anneal_steps: 50000
+lr_anneal_steps: 30000
