@@ -1,0 +1,2 @@
+python -m torch.distributed.launch --nproc_per_node=4 scripts/image_sample.py --model_path logs/celeba_64/07_finetune_200K@pair_T,0.20,G=0.025:2023-05-05-01-29-18-655279 --pt_name ema_0.9999_015000.pt --num_samples 50000 --batch_size 512 --sampler ddim100,ddim50
+python -m torch.distributed.launch --nproc_per_node=4 scripts/image_sample.py --model_path logs/cifar10_32/07_finetune_200K@pair_T,0.20,G=0.025:2023-05-02-00-05-29-687760 --pt_name ema_0.9999_015000.pt --num_samples 50000 --batch_size 512 --sampler ddim100,ddim50

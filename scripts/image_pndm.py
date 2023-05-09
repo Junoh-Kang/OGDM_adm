@@ -57,7 +57,7 @@ def main():
     schedule = Schedule(args, {"type":"linear",
                                "beta_start": 0.0001,
                                "beta_end": 0.02, 
-                               "diffusion_step": args.diffusion_steps},
+                               "diffusion_step": 1000},
                                dist_util.dev())
 
     model = create_model(
