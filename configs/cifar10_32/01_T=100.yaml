@@ -1,0 +1,63 @@
+# project:
+log_dir: './logs'
+project: "lgai_cifar10_32"
+exp: "01_T=100"
+log: ["schedule_sampler", "lossG_weight", "lr_disc"]
+
+# data:
+data_dir: "./data/cifar10_32"
+image_size: 32
+
+# model:
+num_channels: 128
+num_res_blocks: 3
+num_heads: 1
+num_heads_upsample: -1
+num_head_channels: -1
+attention_resolutions: "16,8"
+channel_mult: ""
+dropout: 0.0
+class_cond: False
+use_scale_shift_norm: True
+resblock_updown: False
+use_fp16: False
+use_new_attention_order: False
+
+# discriminator:
+use_discriminator: True
+t_dim: 2
+
+# diffusion:
+learn_sigma: False
+diffusion_steps: 1000
+noise_schedule: "linear"
+timestep_respacing: "ddim100"
+use_kl: False
+predict_xstart: False
+rescale_timesteps: False
+rescale_learned_sigmas: False
+schedule_sampler: "pair,0.25" # "pair, uniform"
+
+# training:
+# resume
+use_checkpoint: False
+resume_checkpoint: ""
+# batch
+batch_size: 64
+microbatch: -1  # -1 disables microbatches
+# about losses
+lr_model: 1e-4
+lr_disc: 5e-4
+lossD_type: "hinge"
+lossG_weight: 0.0
+grad_weight: 0.5
+# saving
+ema_rate: '0.9999'
+log_interval: 10
+save_interval: 5000
+sample_num: 64
+sample_type: ["ddim100", "ddim10"]
+# etc
+fp16_scale_growth: 0.001
+weight_decay: 0.0
+lr_anneal_steps: 0 
