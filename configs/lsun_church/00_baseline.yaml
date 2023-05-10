@@ -10,11 +10,11 @@ image_size: 256
 
 # model:
 num_channels: 128
-num_res_blocks: 3
+num_res_blocks: 2
 num_heads: 1
 num_heads_upsample: -1
 num_head_channels: -1
-attention_resolutions: "16,8"
+attention_resolutions: "16"
 channel_mult: ""
 dropout: 0.0
 class_cond: False
