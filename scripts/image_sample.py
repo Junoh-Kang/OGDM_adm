@@ -59,10 +59,10 @@ def main():
         try:
             if sample_type.startswith("ddim"):
                 sample_fn = create_gaussian_diffusion(**diffusion_kwargs).ddim_sample_loop
-            elif sample_type.starswith("ddpm"):
+            elif sample_type.startswith("ddpm"):
                 sample_fn = create_gaussian_diffusion(**diffusion_kwargs).p_sample_loop
             else:
-                raise
+                raise NoSampler
         except:
             continue
         #sample
@@ -70,7 +70,10 @@ def main():
             start = time.time()
             print(f"sampling {sample_type}")
         
-        folder = f"{args.model_path}/fid/{args.pt_name}/{sample_type}"
+        if args.eta == 0:
+            folder = f"{args.model_path}/fid/{args.pt_name}/{sample_type}"
+        else:
+            folder = f"{args.model_path}/fid/{args.pt_name}/{sample_type}_{args.eta}"
         os.makedirs(folder, exist_ok=True)
         num_samples = args.num_samples
         num_sampled = 0
@@ -83,6 +86,7 @@ def main():
                     ddp_model, 
                     (min(size[0], num_samples - len(all_images) * size[0]), *size[1:]),
                     clip_denoised=args.clip_denoised,
+                    eta=args.eta
                 )
                 sample = ((sample + 1) * 127.5).clamp(0, 255).to(th.uint8)
                 sample = sample.contiguous()
@@ -116,6 +120,7 @@ def create_argparser_and_config():
     tmp_parser.add_argument('--clip_denoised', type=bool, default=True)
     tmp_parser.add_argument('--num_samples', type=int, default=50000)
     tmp_parser.add_argument('--sampler', type=str)
+    tmp_parser.add_argument('--eta', type=float, default=0)
 
     tmp_parser.add_argument("--local_rank", type=int) # For DDP
     tmp_parser.add_argument("--rank", type=int) # For DDP
@@ -136,6 +141,7 @@ def create_argparser_and_config():
     parser.add_argument('--clip_denoised', type=bool, default=True)
     parser.add_argument('--num_samples', type=int, default=50000)
     parser.add_argument('--sampler', type=str)
+    parser.add_argument('--eta', type=float, default=0)
     
     parser.add_argument("--local_rank", type=int) # For DDP
     parser.add_argument("--rank", type=int) # For DDP

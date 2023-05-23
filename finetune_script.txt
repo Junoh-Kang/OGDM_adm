@@ -1,1 +1,1 @@
-python -m torch.distributed.launch --nproc_per_node=4 scripts/image_sample.py --model_path logs/cifar10_32/00_baseline@G=0.0:2023-04-28-22-46-37-350895 --pt_name ema_0.9999_300000.pt --num_samples 50000 --batch_size 512 --sampler ddim100,ddim50,ddim20,ddim10
+python -m torch.distributed.launch --nproc_per_node=2 scripts/image_sample.py --model_path logs/cifar10_32/06_k=0.15@G=0.001:2023-05-04-15-42-13-803060 --pt_name ema_0.9999_100000.pt --num_samples 32 --batch_size 16 --sampler ddim10
