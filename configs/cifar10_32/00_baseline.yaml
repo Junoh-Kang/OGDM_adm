@@ -2,7 +2,7 @@
 log_dir: './logs'
 project: "cifar10_32"
 exp: "00_baseline"
-log: ["lossG_weight"]
+log: ["lossG_weight", "noise_schedule"]
 
 # data:
 data_dir: "./data/cifar10_32"

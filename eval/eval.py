@@ -9,15 +9,15 @@ os.chdir("/home/junoh/2022_DM/adm")
 ############################################################################################################
 gpu_no = "0"
 FID = True
-PRDC = True
+PRDC = False
 project_dirs = [
     # "logs/celeba_64/00_baseline@uniform,G=0.0:2023-04-08-21-25-49-813419",
     # "logs/celeba_64/06_k=0.1@G=0.01:2023-04-15-18-47-28-701755",
     # "logs/celeba_64/07_finetune_200K@pair_T,0.15,G=0.025:2023-05-04-05-53-44-463583",
     # "logs/celeba_64/07_finetune_200K@pair_T,0.20,G=0.025:2023-05-05-01-29-18-655279",
 
-    # "logs/cifar10_32/00_baseline@G=0.0:2023-04-28-22-46-37-350895",
-    "logs/cifar10_32/06_k=0.1@G=0.01:2023-04-29-05-56-57-541934",
+    "logs/cifar10_32/00_baseline@G=0.0:2023-04-28-22-46-37-350895",
+    # "logs/cifar10_32/06_k=0.1@G=0.01:2023-04-29-05-56-57-541934",
     # "logs/cifar10_32/07_finetune_200K@pair_T,0.15,G=0.025:2023-05-02-07-41-59-080179"
     # "logs/cifar10_32/07_finetune_200K@pair_T,0.20,G=0.025:2023-05-02-00-05-29-687760",
 
@@ -34,8 +34,8 @@ models = [
     # "ema_0.9999_030000.pt",
 ]
 sample_types = [
-    # "ddim100", "ddim50", "ddim20", "ddim10",
-    "F-PNDM100", "F-PNDM50", "F-PNDM20", "F-PNDM10"
+    "ddim100", "ddim50", "ddim20", "ddim10",
+    # "F-PNDM100", "F-PNDM50", "F-PNDM20", "F-PNDM10"
 ]
 fid_ref = {
     "cifar10" : "data/cifar10_fid.npz",
