@@ -59,9 +59,10 @@ def main():
         try:
             if sample_type.startswith("ddim"):
                 sample_fn = create_gaussian_diffusion(**diffusion_kwargs).ddim_sample_loop
-            else:
-                sample_type = "ddpm" + str(sample_type)
+            elif sample_type.starswith("ddpm"):
                 sample_fn = create_gaussian_diffusion(**diffusion_kwargs).p_sample_loop
+            else:
+                raise
         except:
             continue
         #sample
