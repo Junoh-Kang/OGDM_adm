@@ -1,6 +1,6 @@
 # project:
 log_dir: './logs'
-project: "lgai_celeba_64"
+project: "celeba_64"
 exp: "00_baseline"
 log: ["lossG_weight", "noise_schedule"]
 
