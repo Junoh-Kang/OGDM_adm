@@ -4,18 +4,22 @@ sampler = "ddim100,ddim50,ddim20,ddim10"
 eta=0.0
 # sampler = "100,50,20,10"
 project_dirs = [
-    "logs/cifar10_32/07_finetune_cos_300K@pair_T,0.15,G=0.025:2023-05-25-17-11-12-258661",
-    "logs/cifar10_32/07_finetune_cos_300K@pair_T,0.20,G=0.025:2023-05-25-19-12-38-739450",
-    "logs/cifar10_32/07_finetune_cos_500K@pair_T,0.15,G=0.025:2023-05-25-17-12-35-848489",
-    "logs/cifar10_32/07_finetune_cos_500K@pair_T,0.20,G=0.025:2023-05-25-19-14-53-409288",
+    # "logs/cifar10_32/07_finetune_cos_300K@pair_T,0.15,G=0.025:2023-05-25-17-11-12-258661",
+    # "logs/cifar10_32/07_finetune_cos_300K@pair_T,0.20,G=0.025:2023-05-25-19-12-38-739450",
+    # "logs/cifar10_32/07_finetune_cos_500K@pair_T,0.15,G=0.025:2023-05-25-17-12-35-848489",
+    # "logs/cifar10_32/07_finetune_cos_500K@pair_T,0.20,G=0.025:2023-05-25-19-14-53-409288",
+    "logs/cifar10_32/00_baseline@G=0.0,noise_schedule=cosine:2023-05-23-18-07-05-415360",
+    "logs/cifar10_32/00_baseline@G=0.0,noise_schedule=linear:2023-05-23-18-07-35-856180",
 ]
 models = [
-    # "ema_0.9999_200000.pt",
-    # "ema_0.9999_300000.pt",
-    # "ema_0.9999_500000.pt",
-    "ema_0.9999_005000.pt",
-    "ema_0.9999_010000.pt",
-    "ema_0.9999_015000.pt",
+    "ema_0.9999_100000.pt",
+    "ema_0.9999_200000.pt",
+    "ema_0.9999_300000.pt",
+    "ema_0.9999_400000.pt",
+    "ema_0.9999_500000.pt",
+    # "ema_0.9999_005000.pt",
+    # "ema_0.9999_010000.pt",
+    # "ema_0.9999_015000.pt",
     # "ema_0.9999_020000.pt",
     # "ema_0.9999_025000.pt",
     # "ema_0.9999_030000.pt",
