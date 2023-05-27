@@ -4,7 +4,7 @@ import torch as th
 from .gaussian_diffusion import GaussianDiffusion
 
 
-def space_timesteps(num_timesteps, section_counts):
+def space_timesteps(num_timesteps, section_counts, skip_type="uniform"):
     """
     Create a list of timesteps to use from an original diffusion process,
     given the number of timesteps we want to take from equally-sized portions
@@ -29,9 +29,20 @@ def space_timesteps(num_timesteps, section_counts):
     if isinstance(section_counts, str):
         if section_counts.startswith("ddim"):
             desired_count = int(section_counts[len("ddim") :])
-            for i in range(1, num_timesteps):
-                if len(range(0, num_timesteps, i)) == desired_count:
-                    return set(range(0, num_timesteps, i))
+            if skip_type=="uniform":
+                for i in range(1, num_timesteps):
+                    if len(range(0, num_timesteps, i)) == desired_count:
+                        return set(range(0, num_timesteps, i))
+            elif skip_type=="quad":
+                for i in range(1, num_timesteps):
+                    seq = (
+                        np.linspace(
+                            0, np.sqrt(num_timesteps * 0.8), desired_count
+                        ) ** 2
+                    )
+                    if len(seq) == desired_count:
+                        seq = [int(s) for s in list(seq)] 
+                        return set(seq)
             raise ValueError(
                 f"cannot create exactly {num_timesteps} steps with an integer stride"
             )
@@ -40,6 +51,7 @@ def space_timesteps(num_timesteps, section_counts):
     extra = num_timesteps % len(section_counts)
     start_idx = 0
     all_steps = []
+    
     for i, section_count in enumerate(section_counts):
         size = size_per + (1 if i < extra else 0)
         if size < section_count:

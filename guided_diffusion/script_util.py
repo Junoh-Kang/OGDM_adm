@@ -75,6 +75,7 @@ def create_gaussian_diffusion(
     rescale_timesteps=False,
     rescale_learned_sigmas=False,
     timestep_respacing="",
+    skip_type="uniform",   # uniform or quad
 ):
     betas = gd.get_named_beta_schedule(noise_schedule, diffusion_steps)
     if use_kl:
@@ -85,8 +86,9 @@ def create_gaussian_diffusion(
         loss_type = gd.LossType.MSE
     if not timestep_respacing:
         timestep_respacing = [diffusion_steps]
+
     return SpacedDiffusion(
-        use_timesteps=space_timesteps(diffusion_steps, timestep_respacing),
+        use_timesteps=space_timesteps(diffusion_steps, timestep_respacing, skip_type),
         betas=betas,
         model_mean_type=(
             gd.ModelMeanType.EPSILON if not predict_xstart else gd.ModelMeanType.START_X

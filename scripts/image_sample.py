@@ -52,9 +52,13 @@ def main():
     diffusion_kwargs = args_to_dict(args, diffusion_defaults().keys())
     
     args.sample_type = args.sampler.split(",")
-    
     for sample_type in args.sample_type:
         #sample method
+        tag_quad = ""
+        if sample_type.startswith("ddimq"):
+            diffusion_kwargs['skip_type'] = "quad"
+            tag_quad = "_quad"
+            sample_type = sample_type.replace('q', '')
         diffusion_kwargs['timestep_respacing'] = sample_type
         try:
             if sample_type.startswith("ddim"):
@@ -71,9 +75,9 @@ def main():
             print(f"sampling {sample_type}")
         
         if args.eta == 0:
-            folder = f"{args.model_path}/fid/{args.pt_name}/{sample_type}"
+            folder = f"{args.model_path}/fid/{args.pt_name}/{sample_type}{tag_quad}"
         else:
-            folder = f"{args.model_path}/fid/{args.pt_name}/{sample_type}_{args.eta}"
+            folder = f"{args.model_path}/fid/{args.pt_name}/{sample_type}{tag_quad}_{args.eta}"
         os.makedirs(folder, exist_ok=True)
         num_samples = args.num_samples
         num_sampled = 0
@@ -81,7 +85,7 @@ def main():
         with th.no_grad():
             # while num_sampled < args.num_samples:  
             #     sample = sample_fn(ddp_model, (min(size[0], args.num_samples - num_sampled), *size[1:]),clip_denoised=args.clip_denoised,)        
-            while len(all_images) * size[0] < num_samples:                
+            while len(all_images) * size[0] < num_samples:               
                 sample = sample_fn(
                     ddp_model, 
                     (min(size[0], num_samples - len(all_images) * size[0]), *size[1:]),

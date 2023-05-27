@@ -732,6 +732,7 @@ class GaussianDiffusion:
         else:
             img = th.randn(*shape, device=device)
         # if indices is None:
+
         indices = list(range(self.num_timesteps))[::-1]
 
         if progress:
@@ -739,7 +740,6 @@ class GaussianDiffusion:
             from tqdm.auto import tqdm
 
             indices = tqdm(indices)
-
         for i in indices:
             t = th.tensor([i] * shape[0], device=device)
             with th.no_grad():
