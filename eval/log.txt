@@ -915,3 +915,27 @@ ddim100 : FID: 6.479960990764994
 ddim50 : FID: 7.700693375040942
 ddim20 : FID: 11.443769018659737
 ddim10 : FID: 20.16508673561225
+logs/cifar10_32/99_rebuttal@G=0.0,noise_schedule=linear:2023-05-29-12-04-27-733346/fid/ema_0.9999_180000.pt
+ddim50 : FID: 9.165048416864636
+ddim50_quad : FID: 7.27949190643659
+logs/cifar10_32/99_rebuttal@G=0.0,noise_schedule=linear:2023-05-29-12-04-27-733346/fid/ema_0.9999_190000.pt
+ddim50 : FID: 9.210668772831696
+ddim50_quad : FID: 7.413889836725218
+logs/cifar10_32/99_rebuttal@G=0.0,noise_schedule=linear:2023-05-29-12-04-27-733346/fid/ema_0.9999_200000.pt
+ddim50 : FID: 9.057623950153868
+ddim50_quad : FID: 7.451612720379842
+logs/cifar10_32/99_rebuttal@G=0.0,noise_schedule=linear:2023-05-29-12-04-27-733346/fid/ema_0.9999_210000.pt
+ddim50 : FID: 9.02303351998603
+ddim50_quad : FID: 7.446398245223577
+logs/cifar10_32/00_baseline@G=0.0,noise_schedule=linear:2023-05-27-02-03-59-492330/fid/ema_0.9999_200000.pt
+logs/cifar10_32/00_baseline@G=0.0,noise_schedule=linear:2023-05-27-02-03-59-492330/fid/ema_0.9999_200000.pt
+50K
+ddim50 : P R D C : 0.7391 0.6949 0.8869600000000001 0.8889
+ddim50_quad : P R D C : 0.7527 0.7043 0.9263600000000001 0.9008
+logs/cifar10_32/00_baseline@G=0.0,noise_schedule=linear:2023-05-27-02-03-59-492330/fid/ema_0.9999_200000.pt
+ddim50 : P R D C : 0.4955 0.6937 0.37746 0.5547
+ddim50_quad : P R D C : 0.5221 0.6968 0.38948000000000005 0.5313
+logs/cifar10_32/00_baseline@G=0.0,noise_schedule=linear:2023-05-27-02-03-59-492330/fid/ema_0.9999_200000.pt
+ddim50 : P R D C : 0.71738 0.67588 0.842192 0.84508
+ddim50_quad : P R D C : 0.73032 0.68284 0.88844 0.8568
+logs/celeba_64/00_baseline@uniform,G=0.0:2023-04-08-21-25-49-813419/fid/ema_0.9999_300000.pt

@@ -7,23 +7,18 @@ eta=0.0
 # sampler = "100,50,20,10"
 project_dirs = [
     # "logs/cifar10_32/00_baseline@G=0.0,noise_schedule=linear:2023-05-27-02-03-59-492330",
-    "logs/cifar10_32/99_rebuttal@G=0.0,noise_schedule=linear:2023-05-29-12-04-27-733346",
+    # "logs/cifar10_32/99_rebuttal@G=0.0,noise_schedule=linear:2023-05-29-12-04-27-733346",
     # "logs/cifar10_32/99_rebuttal_dropout@G=0.0,noise_schedule=linear:2023-05-29-14-48-04-097012",
+
+    "logs/celeba_64/08_finetune_300K@pair_T,0.15,G=0.025:2023-05-30-01-30-20-698653",
+    "logs/celeba_64/08_finetune_300K@pair_T,0.20,G=0.025:2023-05-30-01-31-38-487658",
 ]
 models = [
-    # "ema_0.9999_160000.pt",
-    # "ema_0.9999_170000.pt",
-    "ema_0.9999_180000.pt",
-    "ema_0.9999_190000.pt",
-    "ema_0.9999_200000.pt",
-    "ema_0.9999_210000.pt",
-    # "ema_0.9999_220000.pt",
-    # "ema_0.9999_230000.pt",
-    # "ema_0.9999_240000.pt",
+    # "ema_0.9999_200000.pt",
 
-    # "ema_0.9999_005000.pt",
-    # "ema_0.9999_010000.pt",
-    # "ema_0.9999_015000.pt",
+    "ema_0.9999_005000.pt",
+    "ema_0.9999_010000.pt",
+    "ema_0.9999_015000.pt",
     # "ema_0.9999_020000.pt",
     # "ema_0.9999_025000.pt",
     # "ema_0.9999_030000.pt",

@@ -8,13 +8,20 @@ os.chdir("/home/junoh/2022_DM/adm")
 #                                                   Settings                                               #
 ############################################################################################################
 gpu_no = "0"
-FID = True
-PRDC = False
+FID = False
+PRDC = True
 project_dirs = [
-    # "logs/cifar10_32/00_baseline@G=0.0,noise_schedule=linear:2023-05-23-18-07-35-856180",
     # "logs/cifar10_32/00_baseline@G=0.0,noise_schedule=linear:2023-05-27-02-03-59-492330",
+
+    # "logs/cifar10_32/99_rebuttal@G=0.0,noise_schedule=linear:2023-05-29-12-04-27-733346",
+    # "logs/cifar10_32/99_rebuttal_dropout@G=0.0,noise_schedule=linear:2023-05-29-14-48-04-097012",
+
     "logs/celeba_64/00_baseline@uniform,G=0.0:2023-04-08-21-25-49-813419",
     "logs/celeba_64/06_k=0.1@G=0.01:2023-04-15-18-47-28-701755",
+    # "logs/celeba_64/07_finetune_200K@pair_T,0.10,G=0.025:2023-05-03-11-13-16-877481",
+    # "logs/celeba_64/08_finetune_300K@pair_T,0.15,G=0.025:2023-05-30-01-30-20-698653",
+    # "logs/celeba_64/08_finetune_300K@pair_T,0.20,G=0.025:2023-05-30-01-31-38-487658",
+
 ]
 models = [
     # "ema_0.9999_180000.pt",
@@ -41,7 +48,7 @@ fid_ref = {
     "celeba" : "data/celeba_fid.npz"
 }
 prdc_ref = {
-    "cifar10" : "data/cifar10_prdc.npz",
+    "cifar10" : "data/cifar10_prdc_50k.npz",
     "celeba" : "data/celeba_prdc.npz",
 }
 output = {
