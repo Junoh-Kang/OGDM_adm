@@ -8,39 +8,39 @@ os.chdir("/home/junoh/2022_DM/adm")
 #                                                   Settings                                               #
 ############################################################################################################
 gpu_no = "0"
-FID = False
+FID = True
 PRDC = True
 project_dirs = [
-    # "logs/cifar10_32/00_baseline@G=0.0,noise_schedule=linear:2023-05-27-02-03-59-492330",
+    
+    # "logs/cifar10_32/99_rebuttal_onlydropout@G=0.0,noise_schedule=linear:2023-05-29-23-58-27-369423",
+    "logs/cifar10_32/99_rebuttal_onlydropout_ours@G=0.01:2023-05-30-15-25-19-884822",
+    # "logs/cifar10_32/08_finetune_280K@pair_T,0.15,G=0.025:2023-05-31-13-22-36-278997",
+    # "logs/cifar10_32/08_finetune_280K@pair_T,0.20,G=0.025:2023-05-31-13-22-49-172142",
 
-    # "logs/cifar10_32/99_rebuttal@G=0.0,noise_schedule=linear:2023-05-29-12-04-27-733346",
-    # "logs/cifar10_32/99_rebuttal_dropout@G=0.0,noise_schedule=linear:2023-05-29-14-48-04-097012",
-
-    "logs/celeba_64/00_baseline@uniform,G=0.0:2023-04-08-21-25-49-813419",
-    "logs/celeba_64/06_k=0.1@G=0.01:2023-04-15-18-47-28-701755",
-    # "logs/celeba_64/07_finetune_200K@pair_T,0.10,G=0.025:2023-05-03-11-13-16-877481",
+    # "logs/celeba_64/00_baseline@uniform,G=0.0:2023-04-08-21-25-49-813419",
+    # "logs/celeba_64/06_k=0.1@G=0.01:2023-04-15-18-47-28-701755",
+    # "logs/celeba_64/07_finetune_300K@pair_T,0.10,G=0.025:2023-05-01-20-38-19-386865",
     # "logs/celeba_64/08_finetune_300K@pair_T,0.15,G=0.025:2023-05-30-01-30-20-698653",
     # "logs/celeba_64/08_finetune_300K@pair_T,0.20,G=0.025:2023-05-30-01-31-38-487658",
 
 ]
 models = [
-    # "ema_0.9999_180000.pt",
-    # "ema_0.9999_190000.pt",
-    # "ema_0.9999_200000.pt",
-    # "ema_0.9999_210000.pt",
-    "ema_0.9999_300000.pt"
+    "ema_0.9999_250000.pt",
+    "ema_0.9999_260000.pt",
+    "ema_0.9999_270000.pt",
+    "ema_0.9999_280000.pt",
+    "ema_0.9999_290000.pt",
+    # "ema_0.9999_280000.pt",
+
     # "ema_0.9999_005000.pt",
     # "ema_0.9999_010000.pt",
     # "ema_0.9999_015000.pt",
-    # "ema_0.9999_020000.pt",
-    # "ema_0.9999_025000.pt",
-    # "ema_0.9999_030000.pt",
 ]
 sample_types = [
+    # "ddim50"
+    "ddim50", "ddim20", "ddim10",
     # "ddim100_quad", "ddim50_quad","ddim20_quad","ddim10_quad",
-    # "ddim50", "ddim50_quad",
-    "ddim100", "ddim50", "ddim20", "ddim10",
-    # "ddim100_1.0", "ddim50_1.0", "ddim20_1.0", "ddim10_1.0",
+    # "ddim50_1.0", "ddim20_1.0", "ddim10_1.0",
     # "F-PNDM100", "F-PNDM50", "F-PNDM20", "F-PNDM10"
 ]
 fid_ref = {
@@ -52,8 +52,8 @@ prdc_ref = {
     "celeba" : "data/celeba_prdc.npz",
 }
 output = {
-    "cifar10" : "eval/log.txt",
-    "celeba" : "eval/log.txt"
+    "cifar10" : f"eval/log{gpu_no}.txt",
+    "celeba" : f"eval/log{gpu_no}.txt",
 }
 ############################################################################################################
 
