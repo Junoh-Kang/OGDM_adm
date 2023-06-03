@@ -1,26 +1,26 @@
 # project:
 log_dir: './logs'
-project: "lsun_church"
-exp: "00_baseline"
-log: []
+project: "lsun"
+exp: "test"
+log: ["schedule_sampler", ]
 
 # data:
-data_dir: "./data/lsun_church"
+data_dir: "./data/lsun"
 image_size: 256
 
 # model:
-num_channels: 128
+num_channels: 256
 num_res_blocks: 2
 num_heads: 1
 num_heads_upsample: -1
-num_head_channels: -1
-attention_resolutions: "16"
+num_head_channels: 64
+attention_resolutions: "32,16,8"
 channel_mult: ""
-dropout: 0.0
+dropout: 0.1
 class_cond: False
 use_scale_shift_norm: True
-resblock_updown: False
-use_fp16: False
+resblock_updown: True
+use_fp16: True
 use_new_attention_order: False
 
 # discriminator:
@@ -53,8 +53,8 @@ lossG_weight: 0.0
 grad_weight: 0.5
 # saving
 ema_rate: '0.9999'
-log_interval: 10000
-save_interval: 100000
+log_interval: 5000
+save_interval: 30000
 sample_num: 64
 sample_type: ["ddim20", "ddim10"]
 # etc

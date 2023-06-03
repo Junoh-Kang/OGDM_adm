@@ -11,7 +11,6 @@ gpu_no = "0"
 FID = True
 PRDC = True
 project_dirs = [
-    
     # "logs/cifar10_32/99_rebuttal_onlydropout@G=0.0,noise_schedule=linear:2023-05-29-23-58-27-369423",
     "logs/cifar10_32/99_rebuttal_onlydropout_ours@G=0.01:2023-05-30-15-25-19-884822",
     # "logs/cifar10_32/08_finetune_280K@pair_T,0.15,G=0.025:2023-05-31-13-22-36-278997",
@@ -25,11 +24,15 @@ project_dirs = [
 
 ]
 models = [
-    "ema_0.9999_250000.pt",
-    "ema_0.9999_260000.pt",
-    "ema_0.9999_270000.pt",
-    "ema_0.9999_280000.pt",
-    "ema_0.9999_290000.pt",
+    "ema_0.9999_180000.pt",
+    "ema_0.9999_200000.pt",
+    "ema_0.9999_190000.pt",
+
+    # "ema_0.9999_240000.pt",
+    # "ema_0.9999_260000.pt",
+    # "ema_0.9999_270000.pt",
+    # "ema_0.9999_280000.pt",
+    # "ema_0.9999_290000.pt",
     # "ema_0.9999_280000.pt",
 
     # "ema_0.9999_005000.pt",
@@ -37,9 +40,8 @@ models = [
     # "ema_0.9999_015000.pt",
 ]
 sample_types = [
-    # "ddim50"
-    "ddim50", "ddim20", "ddim10",
-    # "ddim100_quad", "ddim50_quad","ddim20_quad","ddim10_quad",
+    # "ddim50", "ddim20", "ddim10",
+    "ddim50_quad","ddim20_quad","ddim10_quad",
     # "ddim50_1.0", "ddim20_1.0", "ddim10_1.0",
     # "F-PNDM100", "F-PNDM50", "F-PNDM20", "F-PNDM10"
 ]
