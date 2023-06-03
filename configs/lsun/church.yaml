@@ -1,11 +1,11 @@
 # project:
 log_dir: './logs'
-project: "lsun"
+project: "lsun_church"
 exp: "test"
-log: ["schedule_sampler", ]
+log: ["schedule_sampler"]
 
 # data:
-data_dir: "./data/lsun"
+data_dir: "./data/lsun_church"
 image_size: 256
 
 # model:
@@ -43,7 +43,7 @@ schedule_sampler: "uniform" # "pair, uniform"
 use_checkpoint: False
 resume_checkpoint: ""
 # batch
-batch_size: 32
+batch_size: 16
 microbatch: -1  # -1 disables microbatches
 # about losses
 lr_model: 1e-4
