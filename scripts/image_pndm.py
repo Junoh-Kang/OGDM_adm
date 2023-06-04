@@ -83,7 +83,6 @@ def main():
     ddp_model.eval()
     size = [args.batch_size, 3, args.image_size, args.image_size]
     
-    
     for sample_speed in args.sampler.split(","):
         sample_speed = int(sample_speed)
         runner = Runner(schedule=schedule,

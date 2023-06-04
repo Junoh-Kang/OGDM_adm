@@ -20,6 +20,8 @@ from guided_diffusion.script_util import (
     args_to_dict,
     add_dict_to_argparser,
 )
+from guided_diffusion.pndm.runner import Runner
+from guided_diffusion.pndm.schedule import Schedule
 def main():
     args, cfg = create_argparser_and_config()
     dist_util.setup_dist(args)
@@ -50,47 +52,52 @@ def main():
     #set sampling methods
     size = [args.batch_size, 3, args.image_size, args.image_size]
     diffusion_kwargs = args_to_dict(args, diffusion_defaults().keys())
-    
+
     args.sample_type = args.sampler.split(",")
     for sample_type in args.sample_type:
-        #sample method
-        tag_quad = ""
-        if sample_type.startswith("ddimq"):
-            diffusion_kwargs['skip_type'] = "quad"
-            tag_quad = "_quad"
-            sample_type = sample_type.replace('q', '')
-        diffusion_kwargs['timestep_respacing'] = sample_type
-        try:
-            if sample_type.startswith("ddim"):
-                sample_fn = create_gaussian_diffusion(**diffusion_kwargs).ddim_sample_loop
-            elif sample_type.startswith("ddpm"):
-                sample_fn = create_gaussian_diffusion(**diffusion_kwargs).p_sample_loop
-            else:
-                raise NoSampler
-        except:
-            continue
-        #sample
+        if "ddim" in sample_type:
+            if sample_type.startswith("ddimq"):
+                diffusion_kwargs['skip_type'] = "quad"
+            diffusion_kwargs['timestep_respacing'] = sample_type.replace("q", "")
+            sample_fn = create_gaussian_diffusion(**diffusion_kwargs).ddim_sample_loop
+        elif "PNDM" in sample_type:
+            if sample_type.startswith("S-PNDM"):
+                args.method = "S-PNDM"
+            elif sample_type.startswith("F-PNDM"):
+                args.method = "F-PNDM"
+            schedule = Schedule(args, {"type":"linear",
+                                        "beta_start": 0.0001,
+                                        "beta_end": 0.02, 
+                                        "diffusion_step": 1000}, dist_util.dev())
+            sample_speed = int(sample_type[6:])
+            runner = Runner(schedule=schedule,
+                            model=ddp_model,
+                            diffusion_step=args.diffusion_steps, 
+                            sample_speed=sample_speed,
+                            size=size,
+                            device=dist_util.dev())
+        else:
+            raise NoSampler
+
         if dist.get_rank() == 0:
             start = time.time()
             print(f"sampling {sample_type}")
         
-        folder = f"{args.model_path}/fid/{args.pt_name}"
-        if args.eta == 0:
-            save_path = f"{folder}/{sample_type}{tag_quad}.npz"
-        else:
-            save_path = f"{folder}/{sample_type}{tag_quad}_{args.eta}.npz"
-        os.makedirs(folder, exist_ok=True)
         num_samples = args.num_samples
         num_sampled = 0
         all_images = []
         with th.no_grad():   
-            while len(all_images) * size[0] < args.num_samples:               
-                sample = sample_fn(
-                    ddp_model, 
-                    (min(size[0], num_samples - len(all_images) * size[0]), *size[1:]),
-                    clip_denoised=args.clip_denoised,
-                    eta=args.eta
-                )
+            while len(all_images) * size[0] < args.num_samples:
+                if "ddim" in sample_type:          
+                    sample = sample_fn(
+                        ddp_model, 
+                        (min(size[0], num_samples - len(all_images) * size[0]), *size[1:]),
+                        clip_denoised=args.clip_denoised,
+                        eta=args.eta
+                    )
+                elif "PNDM" in sample_type:
+                    sample = runner.sample_fid()
+
                 sample = ((sample + 1) * 127.5).clamp(0, 255).to(th.uint8)
                 sample = sample.contiguous()
                 gathered_samples = [th.zeros_like(sample) for _ in range(dist.get_world_size())]
@@ -109,6 +116,13 @@ def main():
                 # all_images = []
                 dist.barrier()
             if dist.get_rank() == 0:
+                folder = f"{args.model_path}/fid/{args.pt_name}"
+                os.makedirs(folder, exist_ok=True)
+                if args.eta == 0:
+                    save_path = f"{folder}/{sample_type}.npz"
+                else:
+                    save_path = f"{folder}/{sample_type}_{args.eta}.npz"
+
                 arr = np.concatenate(all_images, axis=0)
                 arr = arr[: args.num_samples]
                 np.savez(save_path, arr)
