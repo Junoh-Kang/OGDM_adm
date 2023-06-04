@@ -441,3 +441,25 @@ ddim20_quad : FID: 6.911980014160804
 ddim20_quad : P R D C : 0.757 0.6875 0.92652 0.8951
 ddim10_quad : FID: 11.963361569345295
 ddim10_quad : P R D C : 0.7459 0.6542 0.8947400000000001 0.855
+logs/cifar10_32/ours_scratch_0.10,0.01_210k/fid/ema_0.9999_210000.pt
+F-PNDM11 :
+F-PNDM11 : Sample images and stack features (0 images).
+F-PNDM41 :
+F-PNDM41 : Sample images and stack features (0 images).
+logs/cifar10_32/ours_scratch_0.10,0.01_210k/fid/ema_0.9999_280000.pt
+F-PNDM11 :
+logs/cifar10_32/ours_scratch_0.10,0.01_210k/fid/ema_0.9999_210000.pt
+F-PNDM11 :
+F-PNDM11 : Sample images and stack features (0 images).
+F-PNDM41 :
+F-PNDM41 : Sample images and stack features (0 images).
+logs/cifar10_32/ours_scratch_0.10,0.01_210k/fid/ema_0.9999_280000.pt
+F-PNDM11 : FID: 5.2174451512926225
+F-PNDM11 : P R D C : 0.7293 0.7268 0.85932 0.9117
+F-PNDM41 : FID: 4.810230743087629
+F-PNDM41 : P R D C : 0.7526 0.713 0.93622 0.9154
+logs/cifar10_32/baseline_280k/fid/ema_0.9999_280000.pt
+F-PNDM11 : FID: 6.462684173736761
+F-PNDM11 : P R D C : 0.724 0.7157 0.8431200000000001 0.8993
+F-PNDM41 : FID: 3.998594885350485
+F-PNDM41 : P R D C : 0.7465 0.7231 0.9286400000000001 0.9235

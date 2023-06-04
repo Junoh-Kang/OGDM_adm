@@ -74,18 +74,17 @@ def main():
             start = time.time()
             print(f"sampling {sample_type}")
         
+        folder = f"{args.model_path}/fid/{args.pt_name}"
         if args.eta == 0:
-            folder = f"{args.model_path}/fid/{args.pt_name}/{sample_type}{tag_quad}"
+            save_path = f"{folder}/{sample_type}{tag_quad}.npz"
         else:
-            folder = f"{args.model_path}/fid/{args.pt_name}/{sample_type}{tag_quad}_{args.eta}"
+            save_path = f"{folder}/{sample_type}{tag_quad}_{args.eta}.npz"
         os.makedirs(folder, exist_ok=True)
         num_samples = args.num_samples
         num_sampled = 0
         all_images = []
-        with th.no_grad():
-            # while num_sampled < args.num_samples:  
-            #     sample = sample_fn(ddp_model, (min(size[0], args.num_samples - num_sampled), *size[1:]),clip_denoised=args.clip_denoised,)        
-            while len(all_images) * size[0] < num_samples:               
+        with th.no_grad():   
+            while len(all_images) * size[0] < args.num_samples:               
                 sample = sample_fn(
                     ddp_model, 
                     (min(size[0], num_samples - len(all_images) * size[0]), *size[1:]),
@@ -100,15 +99,19 @@ def main():
                 
                 if dist.get_rank() == 0:
                     print(f"created {len(all_images) * size[0]} samples...{time.time()-start:.3}s")
-                    images = th.cat(all_images)
-                    for i, image in enumerate(images):
-                        image = image.permute(1,2,0).numpy()
-                        Image.fromarray(image).save(f"{folder}/img{num_sampled + i}.png")
-                        
-                num_samples -= len(all_images) * size[0]
-                num_sampled += len(all_images) * size[0]
-                all_images = []
+                    # images = th.cat(all_images)
+                    # for i, image in enumerate(images):
+                    #     image = image.permute(1,2,0).numpy()
+                    #     Image.fromarray(image).save(f"{folder}/img{num_sampled + i}.png")
+     
+                # num_samples -= len(all_images) * size[0]
+                # num_sampled += len(all_images) * size[0]
+                # all_images = []
                 dist.barrier()
+            if dist.get_rank() == 0:
+                arr = np.concatenate(all_images, axis=0)
+                arr = arr[: args.num_samples]
+                np.savez(save_path, arr)
         dist.barrier()
         
 
