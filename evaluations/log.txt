@@ -1,0 +1,3 @@
+logs/cifar10_32/baseline/fid/ema_0.9999_280000.pt/ddim50.npz
+Inception Score: 8.669450759887695 FID: 7.696725918164134 sFID: 5.293597864432513 Precision: 0.62404 Recall: 0.57702
+logs/cifar10_32/baseline/fid/ema_0.9999_280000.pt/ddim20.npz
