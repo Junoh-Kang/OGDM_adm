@@ -46,20 +46,17 @@ def main():
 
     print("computing reference batch activations...")
     obj = np.load(args.ref_batch)
+    flag = False
     # load if "pred" (activation) exist 
-    if "pred" not in list(obj.keys()):
-        print ("loading reference activations...")
-        load_acts = np.load(args.ref_batch)
-        ref_acts = load_acts['preds'], load_acts['spatial_preds']
-        print ("loaded!")
-    else:
-        ref_acts = evaluator.read_activations(args.ref_batch)
-        save_act_dir = os.path.dirname(args.ref_batch)
-        if args.save_act_path is not None:
-            print ("saving reference activations...")
-            np.savez(os.path.join(save_act_dir, args.save_act_path),  
-                    **{"pred": ref_acts[0], "s_pred": ref_acts[1]})
-            print ("saved!")
+    if "preds" in list(obj.keys()) and args.save_act_path is not None:
+        flag = True        
+    ref_acts = evaluator.read_activations(args.ref_batch)
+    save_act_dir = os.path.dirname(args.ref_batch)
+    if flag:    
+        print ("saving reference activations...")
+        np.savez(os.path.join(save_act_dir, args.save_act_path),  
+                **{"pred": ref_acts[0], "s_pred": ref_acts[1]})
+        print ("saved!")
     
     print("computing/reading reference batch statistics...")
     ref_stats, ref_stats_spatial = evaluator.read_statistics(args.ref_batch, ref_acts)
