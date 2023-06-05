@@ -125,7 +125,7 @@ def main():
 
                 arr = np.concatenate(all_images, axis=0)
                 arr = arr[: args.num_samples]
-                np.savez(save_path, arr)
+                np.savez(save_path, arr.transpose(0,2,3,1))
         dist.barrier()
         
 

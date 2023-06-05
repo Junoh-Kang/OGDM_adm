@@ -1,6 +1,7 @@
 import argparse
 import io
 import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' 
 import random
 import warnings
 import zipfile
@@ -45,7 +46,7 @@ def main():
     ref_acts = evaluator.read_activations(args.ref_batch)
     print("computing/reading reference batch statistics...")
     ref_stats, ref_stats_spatial = evaluator.read_statistics(args.ref_batch, ref_acts)
-
+    
     print("computing sample batch activations...")
     sample_acts = evaluator.read_activations(args.sample_batch)
     print("computing/reading sample batch statistics...")
@@ -62,7 +63,6 @@ def main():
 
 class InvalidFIDException(Exception):
     pass
-
 
 class FIDStatistics:
     def __init__(self, mu: np.ndarray, sigma: np.ndarray):
@@ -119,7 +119,7 @@ class Evaluator:
     def __init__(
         self,
         session,
-        batch_size=64,
+        batch_size=512,
         softmax_batch_size=512,
     ):
         self.sess = session
@@ -136,6 +136,14 @@ class Evaluator:
         self.compute_activations(np.zeros([1, 8, 64, 64, 3]))
 
     def read_activations(self, npz_path: str) -> Tuple[np.ndarray, np.ndarray]:
+        
+        obj = np.load(npz_path)
+        if "preds" in list(obj.keys()):
+            return (obj["preds"], obj["spatial_preds"])
+        else:
+            # breakpoint()
+            if obj["arr_0"].shape[3] != 3:
+                np.savez(npz_path, obj["arr_0"].transpose(0,2,3,1))
         with open_npz_array(npz_path, "arr_0") as reader:
             return self.compute_activations(reader.read_batches(self.batch_size))
 
@@ -149,13 +157,17 @@ class Evaluator:
         """
         preds = []
         spatial_preds = []
+        cnt = 0 
         for batch in tqdm(batches):
             batch = batch.astype(np.float32)
+            # if batch.shape[3] != 3:
+            #     batch = batch.transpose(0,2,3,1)
             pred, spatial_pred = self.sess.run(
                 [self.pool_features, self.spatial_features], {self.image_input: batch}
             )
             preds.append(pred.reshape([pred.shape[0], -1]))
             spatial_preds.append(spatial_pred.reshape([spatial_pred.shape[0], -1]))
+        # np.savez("test.npz", preds=np.concatenate(preds,axis=0), spatial_preds=np.concatenate(spatial_preds,axis=0))
         return (
             np.concatenate(preds, axis=0),
             np.concatenate(spatial_preds, axis=0),
