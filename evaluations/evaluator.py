@@ -133,7 +133,7 @@ class Evaluator:
     def __init__(
         self,
         session,
-        batch_size=100, #512,
+        batch_size=512,
         softmax_batch_size=512,
     ):
         self.sess = session
@@ -468,11 +468,9 @@ class NpzArrayReader(ABC):
     def read_batches(self, batch_size: int) -> Iterable[np.ndarray]:
         
         def gen_fn():
-            i = 0
             while True:
                 batch = self.read_batch(batch_size)
-                i = i+1
-                if batch is None or i == 100:
+                if batch is None:
                     break
                 yield batch
 
