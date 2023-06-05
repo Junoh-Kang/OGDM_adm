@@ -48,7 +48,7 @@ def main():
     obj = np.load(args.ref_batch)
     flag = False
     # load if "pred" (activation) exist 
-    if "preds" in list(obj.keys()) and args.save_act_path is not None:
+    if "preds" not in list(obj.keys()) and args.save_act_path is not None:
         flag = True        
     ref_acts = evaluator.read_activations(args.ref_batch)
     save_act_dir = os.path.dirname(args.ref_batch)
