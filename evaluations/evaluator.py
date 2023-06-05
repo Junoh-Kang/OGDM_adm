@@ -55,7 +55,7 @@ def main():
     if flag:    
         print ("saving reference activations...")
         np.savez(os.path.join(save_act_dir, args.save_act_path),  
-                **{"pred": ref_acts[0], "s_pred": ref_acts[1]})
+                **{"preds": ref_acts[0], "spatial_preds": ref_acts[1]})
         print ("saved!")
     
     print("computing/reading reference batch statistics...")
