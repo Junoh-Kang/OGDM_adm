@@ -28,6 +28,8 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("ref_batch", help="path to reference batch npz file")
     parser.add_argument("sample_batch", help="path to sample batch npz file")
+    parser.add_argument("-save_act_path", "--save_act_path", type=str, default='ref_acts.npz', help="name of reference activation")
+    
     args = parser.parse_args()
 
     config = tf.ConfigProto(
@@ -42,7 +44,22 @@ def main():
     evaluator.warmup()
 
     print("computing reference batch activations...")
-    ref_acts = evaluator.read_activations(args.ref_batch)
+    obj = np.load(args.ref_batch)
+    # load if "pred" (activation) exist 
+    if "pred" in list(obj.keys()):
+        print ("loading reference activations...")
+        load_acts = np.load(args.ref_batch)
+        ref_acts = load_acts['pred'], load_acts['s_pred']
+        print ("loaded!")
+    else:
+        ref_acts = evaluator.read_activations(args.ref_batch)
+        save_act_dir = os.path.dirname(args.ref_batch)
+        if args.save_act_path is not None:
+            print ("saving reference activations...")
+            np.savez(os.path.join(save_act_dir, args.save_act_path),  
+                    **{"pred": ref_acts[0], "s_pred": ref_acts[1]})
+            print ("saved!")
+    
     print("computing/reading reference batch statistics...")
     ref_stats, ref_stats_spatial = evaluator.read_statistics(args.ref_batch, ref_acts)
 
@@ -50,12 +67,12 @@ def main():
     sample_acts = evaluator.read_activations(args.sample_batch)
     print("computing/reading sample batch statistics...")
     sample_stats, sample_stats_spatial = evaluator.read_statistics(args.sample_batch, sample_acts)
-
     print("Computing evaluations...")
-    print("Inception Score:", evaluator.compute_inception_score(sample_acts[0]))
+    #print("Inception Score:", evaluator.compute_inception_score(sample_acts[0]))
     print("FID:", sample_stats.frechet_distance(ref_stats))
-    print("sFID:", sample_stats_spatial.frechet_distance(ref_stats_spatial))
-    prec, recall = evaluator.compute_prec_recall(ref_acts[0], sample_acts[0])
+    #print("sFID:", sample_stats_spatial.frechet_distance(ref_stats_spatial))
+    N = sample_acts[0].shape[0]
+    prec, recall = evaluator.compute_prec_recall(ref_acts[0][:N], sample_acts[0])
     print("Precision:", prec)
     print("Recall:", recall)
 
@@ -119,7 +136,7 @@ class Evaluator:
     def __init__(
         self,
         session,
-        batch_size=64,
+        batch_size=100, #64,
         softmax_batch_size=512,
     ):
         self.sess = session
@@ -440,10 +457,13 @@ class NpzArrayReader(ABC):
         pass
 
     def read_batches(self, batch_size: int) -> Iterable[np.ndarray]:
+        
         def gen_fn():
+            i = 0
             while True:
                 batch = self.read_batch(batch_size)
-                if batch is None:
+                i = i+1
+                if batch is None or i == 100:
                     break
                 yield batch
 
