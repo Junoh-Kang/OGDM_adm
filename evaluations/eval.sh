@@ -6,5 +6,5 @@ sample=$2
 log=$3
 
 echo $sample >> $log
-output=$(python evaluations/evaluator.py $reference $sample | tail -5)
+output=$(python evaluations/evaluator.py $reference $sample | tail -3)
 echo $output >> $log

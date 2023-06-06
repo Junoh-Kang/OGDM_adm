@@ -1,3 +1,66 @@
 logs/cifar10_32/baseline/fid/ema_0.9999_280000.pt/ddim50.npz
-Inception Score: 8.669450759887695 FID: 7.696725918164134 sFID: 5.293597864432513 Precision: 0.62404 Recall: 0.57702
+FID: 7.696719697713604 Precision: 0.62402 Recall: 0.57696
 logs/cifar10_32/baseline/fid/ema_0.9999_280000.pt/ddim20.npz
+FID: 11.728930131766845 Precision: 0.60444 Recall: 0.53694
+logs/cifar10_32/baseline/fid/ema_0.9999_280000.pt/ddim10.npz
+FID: 20.561430273500605 Precision: 0.56508 Recall: 0.46394
+logs/cifar10_32/baseline/fid/ema_0.9999_280000.pt/ddimq50.npz
+FID: 5.5945749626682755 Precision: 0.6367 Recall: 0.5958
+logs/cifar10_32/baseline/fid/ema_0.9999_280000.pt/ddimq20.npz
+FID: 7.995496693438042 Precision: 0.62842 Recall: 0.57496
+logs/cifar10_32/baseline/fid/ema_0.9999_280000.pt/ddimq10.npz
+FID: 15.163091397675203 Precision: 0.60152 Recall: 0.5217
+logs/cifar10_32/baseline/fid/ema_0.9999_280000.pt/S-PNDM49.npz
+FID: 4.239104836671231 Precision: 0.62838 Recall: 0.61214
+logs/cifar10_32/baseline/fid/ema_0.9999_280000.pt/S-PNDM19.npz
+FID: 5.94037398971318 Precision: 0.61746 Recall: 0.60212
+logs/cifar10_32/baseline/fid/ema_0.9999_280000.pt/F-PNDM41.npz
+FID: 4.059456210073847 Precision: 0.63242 Recall: 0.61506
+logs/cifar10_32/baseline/fid/ema_0.9999_280000.pt/F-PNDM11.npz
+FID: 6.354018371510108 Precision: 0.60324 Recall: 0.59466
+logs/cifar10_32/ours_scratch_0.10,0.01/fid/ema_0.9999_210000.pt/ddim50.npz
+FID: 6.354543471948546 Precision: 0.62416 Recall: 0.5926
+logs/cifar10_32/ours_scratch_0.10,0.01/fid/ema_0.9999_210000.pt/ddim20.npz
+FID: 7.930824845323343 Precision: 0.6176 Recall: 0.56884
+logs/cifar10_32/ours_scratch_0.10,0.01/fid/ema_0.9999_210000.pt/ddim10.npz
+FID: 11.836913803003426 Precision: 0.60012 Recall: 0.52878
+logs/cifar10_32/ours_scratch_0.10,0.01/fid/ema_0.9999_210000.pt/ddimq50.npz
+FID: 5.425033086346275 Precision: 0.63156 Recall: 0.60014
+logs/cifar10_32/ours_scratch_0.10,0.01/fid/ema_0.9999_210000.pt/ddimq20.npz
+FID: 6.7194057820252056 Precision: 0.62886 Recall: 0.588
+logs/cifar10_32/ours_scratch_0.10,0.01/fid/ema_0.9999_210000.pt/ddimq10.npz
+FID: 11.63823996143202 Precision: 0.61988 Recall: 0.5434
+logs/cifar10_32/ours_scratch_0.10,0.01/fid/ema_0.9999_210000.pt/S-PNDM49.npz
+FID: 4.869455192717282 Precision: 0.62618 Recall: 0.61592
+logs/cifar10_32/ours_scratch_0.10,0.01/fid/ema_0.9999_210000.pt/S-PNDM19.npz
+FID: 5.164148791923083 Precision: 0.61784 Recall: 0.60498
+logs/cifar10_32/ours_scratch_0.10,0.01/fid/ema_0.9999_210000.pt/F-PNDM41.npz
+FID: 5.016238524841128 Precision: 0.62676 Recall: 0.6104
+logs/cifar10_32/ours_scratch_0.10,0.01/fid/ema_0.9999_210000.pt/F-PNDM11.npz
+FID: 5.759976654381262 Precision: 0.58862 Recall: 0.61186
+logs/cifar10_32/ours_scratch_0.10,0.01/fid/ema_0.9999_280000.pt/ddim50.npz
+FID: 6.196715572469884 Precision: 0.62656 Recall: 0.59778
+logs/cifar10_32/ours_ft280k_0.15,0.025/fid/ema_0.9999_015000.pt/ddim50.npz
+FID: 6.283715024940477 Precision: 0.63888 Recall: 0.59216
+logs/cifar10_32/ours_ft280k_0.15,0.025/fid/ema_0.9999_015000.pt/ddim20.npz
+FID: 7.741608889293786 Precision: 0.6284 Recall: 0.5715
+logs/cifar10_32/ours_ft280k_0.15,0.025/fid/ema_0.9999_015000.pt/ddim10.npz
+FID: 11.882496386984599 Precision: 0.60896 Recall: 0.53112
+logs/cifar10_32/ours_ft280k_0.20,0.025/fid/ema_0.9999_015000.pt/ddim50.npz
+FID: 6.941217967795751 Precision: 0.6366 Recall: 0.58988
+logs/cifar10_32/ours_ft280k_0.20,0.025/fid/ema_0.9999_015000.pt/ddim20.npz
+FID: 7.782112826754144 Precision: 0.62568 Recall: 0.5725
+logs/cifar10_32/ours_ft280k_0.20,0.025/fid/ema_0.9999_015000.pt/ddim10.npz
+FID: 10.696713315876593 Precision: 0.61562 Recall: 0.54154
+logs/cifar10_32/baseline/fid/ema_0.9999_280000.pt/ddim50_1.0.npz
+FID: 14.277620737528935 Precision: 0.60238 Recall: 0.4909
+logs/cifar10_32/baseline/fid/ema_0.9999_280000.pt/ddim20_1.0.npz
+FID: 25.42370345427082 Precision: 0.5554 Recall: 0.3875
+logs/cifar10_32/baseline/fid/ema_0.9999_280000.pt/ddim10_1.0.npz
+FID: 44.371029113441125 Precision: 0.48824 Recall: 0.27808
+logs/cifar10_32/ours_scratch_0.10,0.01/fid/ema_0.9999_210000.pt/ddim50_1.0.npz
+FID: 9.941012354119437 Precision: 0.61762 Recall: 0.52374
+logs/cifar10_32/ours_scratch_0.10,0.01/fid/ema_0.9999_210000.pt/ddim20_1.0.npz
+FID: 16.835425662306648 Precision: 0.591 Recall: 0.45006
+logs/cifar10_32/ours_scratch_0.10,0.01/fid/ema_0.9999_210000.pt/ddim10_1.0.npz
+FID: 29.703312311382604 Precision: 0.54074 Recall: 0.35902

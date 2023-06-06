@@ -1,4 +1,1 @@
-python -m torch.distributed.launch --nproc_per_node=4 scripts/image_sample.py --model_path logs/cifar10_32/baseline --pt_name ema_0.9999_280000.pt --num_samples 50000 --batch_size 512 --sampler ddim50,ddim20,ddim10 --eta 1.0
 python -m torch.distributed.launch --nproc_per_node=4 scripts/image_sample.py --model_path logs/cifar10_32/ours_scratch_0.10,0.01 --pt_name ema_0.9999_210000.pt --num_samples 50000 --batch_size 512 --sampler ddim50,ddim20,ddim10 --eta 1.0
-python -m torch.distributed.launch --nproc_per_node=4 scripts/image_sample.py --model_path logs/celeba_64/baseline --pt_name ema_0.9999_300000.pt --num_samples 50000 --batch_size 512 --sampler ddim50,ddim20,ddim10 --eta 1.0
-python -m torch.distributed.launch --nproc_per_node=4 scripts/image_sample.py --model_path logs/celeba_64/ours_scratch_0.10,0.01 --pt_name ema_0.9999_300000.pt --num_samples 50000 --batch_size 512 --sampler ddim50,ddim20,ddim10 --eta 1.0
