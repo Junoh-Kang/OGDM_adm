@@ -64,3 +64,91 @@ logs/cifar10_32/ours_scratch_0.10,0.01/fid/ema_0.9999_210000.pt/ddim20_1.0.npz
 FID: 16.835425662306648 Precision: 0.591 Recall: 0.45006
 logs/cifar10_32/ours_scratch_0.10,0.01/fid/ema_0.9999_210000.pt/ddim10_1.0.npz
 FID: 29.703312311382604 Precision: 0.54074 Recall: 0.35902
+logs/celeba_64/baseline/fid/ema_0.9999_300000.pt/ddim50.npz
+FID: 5.102211900169124 Precision: 0.71848 Recall: 0.50008
+logs/celeba_64/baseline/fid/ema_0.9999_300000.pt/ddim20.npz
+FID: 7.882547451929099 Precision: 0.71506 Recall: 0.4285
+logs/celeba_64/baseline/fid/ema_0.9999_300000.pt/ddim10.npz
+FID: 11.924713866766496 Precision: 0.71142 Recall: 0.3154
+logs/celeba_64/baseline/fid/ema_0.9999_300000.pt/ddimq50.npz
+FID: 4.99081354081963 Precision: 0.6885 Recall: 0.5685
+logs/celeba_64/baseline/fid/ema_0.9999_300000.pt/ddimq20.npz
+FID: 6.445121058662664 Precision: 0.70356 Recall: 0.51394
+logs/celeba_64/baseline/fid/ema_0.9999_300000.pt/ddimq10.npz
+FID: 11.486976113014691 Precision: 0.7149 Recall: 0.3955
+logs/celeba_64/baseline/fid/ema_0.9999_300000.pt/ddim50_1.0.npz
+FID: 13.507866224228593 Precision: 0.76026 Recall: 0.31236
+logs/celeba_64/baseline/fid/ema_0.9999_300000.pt/ddim20_1.0.npz
+FID: 21.000530096930248 Precision: 0.77192 Recall: 0.18124
+logs/celeba_64/baseline/fid/ema_0.9999_300000.pt/ddim10_1.0.npz
+FID: 31.08871715701997 Precision: 0.76732 Recall: 0.079
+logs/celeba_64/ours_scratch_0.10,0.01/fid/ema_0.9999_300000.pt/ddim50_1.0.npz
+FID: 9.624777513257726 Precision: 0.75644 Recall: 0.39988
+logs/celeba_64/ours_scratch_0.10,0.01/fid/ema_0.9999_300000.pt/ddim20_1.0.npz
+FID: 15.73979084523836 Precision: 0.79418 Recall: 0.27724
+logs/celeba_64/ours_scratch_0.10,0.01/fid/ema_0.9999_300000.pt/ddim10_1.0.npz
+FID: 24.22419764634816 Precision: 0.8273 Recall: 0.15754
+logs/celeba_64/ours_ft300k_0.15,0.025/fid/ema_0.9999_015000.pt/ddim50.npz
+FID: 3.5958605215185457 Precision: 0.66134 Recall: 0.58648
+logs/celeba_64/ours_ft300k_0.15,0.025/fid/ema_0.9999_015000.pt/ddim20.npz
+FID: 4.24958696611219 Precision: 0.67508 Recall: 0.54662
+logs/celeba_64/ours_ft300k_0.15,0.025/fid/ema_0.9999_015000.pt/ddim10.npz
+FID: 7.498027658510409 Precision: 0.67268 Recall: 0.45338
+logs/celeba_64/ours_ft300k_0.20,0.025/fid/ema_0.9999_015000.pt/ddim50.npz
+FID: 4.7581509435902944 Precision: 0.6403 Recall: 0.59984
+logs/celeba_64/ours_ft300k_0.20,0.025/fid/ema_0.9999_015000.pt/ddim20.npz
+FID: 4.610413486594041 Precision: 0.6569 Recall: 0.5707
+logs/celeba_64/ours_ft300k_0.20,0.025/fid/ema_0.9999_015000.pt/ddim10.npz
+FID: 7.038848385490041 Precision: 0.65548 Recall: 0.50448
+logs/celeba_64/baseline/fid/ema_0.9999_300000.pt/ddim50.npz
+FID: 5.102207983351633 Precision: 0.71822 Recall: 0.49984
+logs/celeba_64/baseline/fid/ema_0.9999_300000.pt/ddim20.npz
+FID: 7.882548974889346 Precision: 0.71512 Recall: 0.42852
+logs/celeba_64/baseline/fid/ema_0.9999_300000.pt/ddim10.npz
+FID: 11.924714247992085 Precision: 0.71142 Recall: 0.31538
+logs/celeba_64/baseline/fid/ema_0.9999_300000.pt/ddimq50.npz
+FID: 4.990812998147135 Precision: 0.68854 Recall: 0.56842
+logs/celeba_64/baseline/fid/ema_0.9999_300000.pt/ddimq20.npz
+FID: 6.445121172419334 Precision: 0.70356 Recall: 0.51394
+logs/celeba_64/baseline/fid/ema_0.9999_300000.pt/ddimq10.npz
+FID: 11.486978081047056 Precision: 0.71488 Recall: 0.3955
+logs/celeba_64/baseline/fid/ema_0.9999_300000.pt/S-PNDM49.npz
+FID: 2.5503640544217205 Precision: 0.70416 Recall: 0.57976
+logs/celeba_64/baseline/fid/ema_0.9999_300000.pt/S-PNDM19.npz
+FID: 4.264652533254065 Precision: 0.71546 Recall: 0.5377
+logs/celeba_64/baseline/fid/ema_0.9999_300000.pt/F-PNDM41.npz
+FID: 2.1397973604780702 Precision: 0.69808 Recall: 0.58622
+logs/celeba_64/baseline/fid/ema_0.9999_300000.pt/F-PNDM11.npz
+FID: 4.292103591539643 Precision: 0.7177 Recall: 0.53476
+logs/celeba_64/baseline/fid/ema_0.9999_300000.pt/ddim50_1.0.npz
+FID: 13.507865432697969 Precision: 0.76026 Recall: 0.31234
+logs/celeba_64/baseline/fid/ema_0.9999_300000.pt/ddim20_1.0.npz
+FID: 21.000528187401983 Precision: 0.77192 Recall: 0.18124
+logs/celeba_64/baseline/fid/ema_0.9999_300000.pt/ddim10_1.0.npz
+FID: 31.08871715701997 Precision: 0.76732 Recall: 0.079
+logs/celeba_64/ours_scratch_0.10,0.01/fid/ema_0.9999_300000.pt/ddim50.npz
+FID: 3.171626228339818 Precision: 0.68448 Recall: 0.57162
+logs/celeba_64/ours_scratch_0.10,0.01/fid/ema_0.9999_300000.pt/ddim20.npz
+FID: 3.9385596519213095 Precision: 0.6984 Recall: 0.53408
+logs/celeba_64/ours_scratch_0.10,0.01/fid/ema_0.9999_300000.pt/ddim10.npz
+FID: 7.911335405602955 Precision: 0.70108 Recall: 0.45136
+logs/celeba_64/ours_scratch_0.10,0.01/fid/ema_0.9999_300000.pt/ddimq50.npz
+FID: 7.626895825793383 Precision: 0.61978 Recall: 0.60004
+logs/celeba_64/ours_scratch_0.10,0.01/fid/ema_0.9999_300000.pt/ddimq20.npz
+FID: 8.23238145586231 Precision: 0.64652 Recall: 0.56008
+logs/celeba_64/ours_scratch_0.10,0.01/fid/ema_0.9999_300000.pt/ddimq10.npz
+FID: 12.495074589865624 Precision: 0.67124 Recall: 0.4621
+logs/celeba_64/ours_scratch_0.10,0.01/fid/ema_0.9999_300000.pt/S-PNDM49.npz
+FID: 2.8939615351975476 Precision: 0.64178 Recall: 0.60938
+logs/celeba_64/ours_scratch_0.10,0.01/fid/ema_0.9999_300000.pt/S-PNDM19.npz
+FID: 2.701820333458727 Precision: 0.6592 Recall: 0.59834
+logs/celeba_64/ours_scratch_0.10,0.01/fid/ema_0.9999_300000.pt/F-PNDM41.npz
+FID: 3.2573041331745003 Precision: 0.63758 Recall: 0.60196
+logs/celeba_64/ours_scratch_0.10,0.01/fid/ema_0.9999_300000.pt/F-PNDM11.npz
+FID: 2.8485044024390618 Precision: 0.64242 Recall: 0.59456
+logs/celeba_64/ours_scratch_0.10,0.01/fid/ema_0.9999_300000.pt/ddim50_1.0.npz
+FID: 9.624775363571189 Precision: 0.75644 Recall: 0.39988
+logs/celeba_64/ours_scratch_0.10,0.01/fid/ema_0.9999_300000.pt/ddim20_1.0.npz
+FID: 15.739791240245296 Precision: 0.79418 Recall: 0.27722
+logs/celeba_64/ours_scratch_0.10,0.01/fid/ema_0.9999_300000.pt/ddim10_1.0.npz
+FID: 24.224198963483218 Precision: 0.82732 Recall: 0.15752
