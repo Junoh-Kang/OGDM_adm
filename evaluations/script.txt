@@ -1,0 +1,1 @@
+python -m torch.distributed.launch --nproc_per_node=4 scripts/image_sample.py --model_path logs/lsun_church/baseline@uniform:2023-06-06-22-45-56-696540 --pt_name ema_0.9999_250000.pt --num_samples 50000 --batch_size 256 --sampler ddim50,ddim20,ddim10 --eta 0.0

@@ -152,3 +152,31 @@ logs/celeba_64/ours_scratch_0.10,0.01/fid/ema_0.9999_300000.pt/ddim20_1.0.npz
 FID: 15.739791240245296 Precision: 0.79418 Recall: 0.27722
 logs/celeba_64/ours_scratch_0.10,0.01/fid/ema_0.9999_300000.pt/ddim10_1.0.npz
 FID: 24.224198963483218 Precision: 0.82732 Recall: 0.15752
+logs/celeba_64/baseline/fid/ema_0.9999_300000.pt/S-PNDM9.npz
+
+logs/celeba_64/baseline/fid/ema_0.9999_300000.pt/S-PNDM9.npz
+FID: 7.24968676648848 Precision: 0.71684 Recall: 0.4536
+logs/celeba_64/ours_scratch_0.10,0.01/fid/ema_0.9999_300000.pt/S-PNDM9.npz
+FID: 4.3408100079415135 Precision: 0.68032 Recall: 0.54226
+logs/cifar10_32/baseline/fid/ema_0.9999_280000.pt/S-PNDM9.npz
+FID: 10.408116028694451 Precision: 0.59334 Recall: 0.55064
+logs/cifar10_32/ours_scratch_0.10,0.01/fid/ema_0.9999_210000.pt/S-PNDM9.npz
+FID: 7.4448578291330705 Precision: 0.5845 Recall: 0.5778
+logs/cifar10_32/ours_ft280k_0.10,0.025/fid/ema_0.9999_015000.pt/ddim50.npz
+
+logs/cifar10_32/ours_ft280k_0.10,0.025/fid/ema_0.9999_015000.pt/ddim20.npz
+
+logs/cifar10_32/ours_ft280k_0.10,0.025/fid/ema_0.9999_015000.pt/ddim10.npz
+
+logs/cifar10_32/ours_ft280k_0.10,0.025/fid/ema_0.9999_015000.pt/ddim50.npz
+FID: 6.2771744266887595 Precision: 0.63506 Recall: 0.58564
+logs/cifar10_32/ours_ft280k_0.10,0.025/fid/ema_0.9999_015000.pt/ddim20.npz
+FID: 8.424638998682724 Precision: 0.61676 Recall: 0.56312
+logs/cifar10_32/ours_ft280k_0.10,0.025/fid/ema_0.9999_015000.pt/ddim10.npz
+FID: 13.546086121175563 Precision: 0.59812 Recall: 0.51332
+logs/celeba_64/ours_ft300k_0.10,0.025/fid/ema_0.9999_015000.pt/ddim50.npz
+FID: 3.2199535668538317 Precision: 0.68264 Recall: 0.56738
+logs/celeba_64/ours_ft300k_0.10,0.025/fid/ema_0.9999_015000.pt/ddim20.npz
+FID: 4.703374438429165 Precision: 0.6913 Recall: 0.51536
+logs/celeba_64/ours_ft300k_0.10,0.025/fid/ema_0.9999_015000.pt/ddim10.npz
+FID: 8.306272346400561 Precision: 0.6915 Recall: 0.42834

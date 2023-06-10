@@ -1,2 +1,0 @@
-data/eval_stats/cifar10_activation.npz
-Inception Score: 11.239544868469238 FID: -1.1368683772161603e-12 sFID: -3.865352482534945e-12 Precision: 1.0 Recall: 1.0
