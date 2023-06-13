@@ -31,7 +31,7 @@ def main():
         **args_to_dict(args, model_defaults().keys())
     ).to(dist_util.dev())
     if not args.pt_name.endswith("pt"): args.pt_name += ".pt"
-    ckpt_path = f"{args.project}/model/{args.pt_name}"
+    ckpt_path = f"{args.project_dir}/model/{args.pt_name}"
     state_dict = th.load(ckpt_path)
     model.load_state_dict(state_dict)
     if th.cuda.is_available():
@@ -116,7 +116,7 @@ def main():
                 # all_images = []
                 dist.barrier()
             if dist.get_rank() == 0:
-                folder = f"{args.project}/fid/{args.pt_name}"
+                folder = f"{args.project_dir}/fid/{args.pt_name}"
                 os.makedirs(folder, exist_ok=True)
                 if args.eta == 0:
                     save_path = f"{folder}/{sample_type}.npz"
@@ -136,7 +136,7 @@ def load_config(cfg_dir):
 
 def create_argparser_and_config():
     tmp_parser = argparse.ArgumentParser()
-    tmp_parser.add_argument('--project', type=str)
+    tmp_parser.add_argument('--project_dir', type=str)
     # tmp_parser.add_argument('--pt_name', type=str)
     tmp_parser.add_argument('--clip_denoised', type=bool, default=True)
     tmp_parser.add_argument('--num_samples', type=int, default=50000)
@@ -157,7 +157,7 @@ def create_argparser_and_config():
     tmp_args = tmp_parser.parse_args()
     
     parser = argparse.ArgumentParser()
-    parser.add_argument('--project', type=str)
+    parser.add_argument('--project_dir', type=str)
     # parser.add_argument('--pt_name', type=str)
     parser.add_argument('--clip_denoised', type=bool, default=True)
     parser.add_argument('--num_samples', type=int, default=50000)
@@ -170,7 +170,7 @@ def create_argparser_and_config():
     parser.add_argument("--gpu", type=int) # For DDP
     parser.add_argument("--dist_url", type=int) # For DDP
     parser.add_argument('--config', default=tmp_args.config, type=str)
-    cfg = load_config(f"{tmp_args.project}/config.yaml")
+    cfg = load_config(f"{tmp_args.project_dir}/config.yaml")
 
     # check is there any omitted keys
     err = ""
