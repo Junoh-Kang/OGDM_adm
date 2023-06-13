@@ -137,7 +137,7 @@ def load_config(cfg_dir):
 def create_argparser_and_config():
     tmp_parser = argparse.ArgumentParser()
     tmp_parser.add_argument('--project_dir', type=str)
-    # tmp_parser.add_argument('--pt_name', type=str)
+    tmp_parser.add_argument('--pt_name', type=str)
     tmp_parser.add_argument('--clip_denoised', type=bool, default=True)
     tmp_parser.add_argument('--num_samples', type=int, default=50000)
     tmp_parser.add_argument('--sampler', type=str)
@@ -158,7 +158,7 @@ def create_argparser_and_config():
     
     parser = argparse.ArgumentParser()
     parser.add_argument('--project_dir', type=str)
-    # parser.add_argument('--pt_name', type=str)
+    parser.add_argument('--pt_name', type=str)
     parser.add_argument('--clip_denoised', type=bool, default=True)
     parser.add_argument('--num_samples', type=int, default=50000)
     parser.add_argument('--sampler', type=str)
