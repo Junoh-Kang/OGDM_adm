@@ -34,6 +34,8 @@ def main():
     ckpt_path = f"{args.project_dir}/model/{args.pt_name}"
     state_dict = th.load(ckpt_path)
     model.load_state_dict(state_dict)
+    if args.use_fp16:
+        model.convert_to_fp16()
     if th.cuda.is_available():
         use_ddp = True
         ddp_model = DDP(
