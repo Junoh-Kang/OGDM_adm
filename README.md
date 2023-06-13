@@ -34,8 +34,8 @@ python -m torch.distributed.launch --nproc_per_node=4 scripts/image_train.py --c
 ```
 # Model Sampling
 ```
-python -m torch.distributed.launch --nproc_per_node=[N] scripts/image_sample.py --model_path [project_dir] --pt_name [pt_name] --num_samples [num_to_sample] --batch_size [B] --sampler [samplers_seperated_by_commas] --eta [eta]
+python -m torch.distributed.launch --nproc_per_node=[N] scripts/image_sample.py --project [project_dir] --pt_name [pt_name] --num_samples [num_to_sample] --batch_size [B] --sampler [samplers_seperated_by_commas] --eta [eta]
 
 # example
-python -m torch.distributed.launch --nproc_per_node=4 scripts/image_sample.py --model_path "logs/celeba_64/00_baseline@uniform,G=0.0:2023-04-08-21-25-49-813419" --pt_name "ema_0.9999_200000.pt" --num_samples 50000 --batch_size 512 --sampler "ddim100,ddim10,ddim5" --eta 0
+python -m torch.distributed.launch --nproc_per_node=4 scripts/image_sample.py --project "logs/celeba_64/00_baseline@uniform,G=0.0:2023-04-08-21-25-49-813419" --pt_name "ema_0.9999_200000.pt" --num_samples 50000 --batch_size 512 --sampler "ddim100,ddim10,ddim5" --eta 0
 ```
