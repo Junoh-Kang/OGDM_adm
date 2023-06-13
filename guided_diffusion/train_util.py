@@ -330,7 +330,6 @@ class TrainLoop:
                     filename = f"model/ema_{rate}_{(self.step+self.resume_step):06d}.pt"
                 with bf.BlobFile(bf.join(get_blob_logdir(), filename), "wb") as f:
                     th.save(state_dict, f)
-                # breakpoint()
 
         save_checkpoint(0, self.mp_trainer_model.master_params)
         for rate, params in zip(self.ema_rate, self.ema_params):

@@ -42,7 +42,7 @@ def main():
     ).to(dist_util.dev())
     if args.finetune:
         model.load_state_dict(th.load(args.finetune))
-    breakpoint()
+    
     if args.use_discriminator:
         discriminator = create_discriminator(
             image_size=args.image_size,
