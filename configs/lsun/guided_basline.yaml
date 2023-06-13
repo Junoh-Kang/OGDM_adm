@@ -28,7 +28,7 @@ use_discriminator: False
 t_dim: 2
 
 # diffusion:
-learn_sigma: False
+learn_sigma: True
 diffusion_steps: 1000
 noise_schedule: "linear"
 timestep_respacing: ""
