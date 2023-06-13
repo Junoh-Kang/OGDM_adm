@@ -35,6 +35,7 @@ def model_defaults():
         num_heads_upsample      = -1,        
         attention_resolutions   = "16, 8",
         channel_mult            = "",
+        learn_sigma             = False,
         dropout                 = 0.0,
         class_cond              = False,
         use_checkpoint          = False,
@@ -123,7 +124,7 @@ def create_model(
     resblock_updown=False,
     use_fp16=False,
     use_new_attention_order=False,
-):
+):  
     if channel_mult == "":
         if image_size == 512:
             channel_mult = (0.5, 1, 1, 2, 2, 4, 4)

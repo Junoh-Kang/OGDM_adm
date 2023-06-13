@@ -7,11 +7,9 @@ Docstrings have been added, as well as DDIM sampling and a new collection of bet
 
 import enum
 import math
-from tqdm import tqdm
 
 import numpy as np
 import torch as th
-import torch.nn.functional as F
 
 from .nn import mean_flat
 from .losses import normal_kl, discretized_gaussian_log_likelihood
@@ -39,13 +37,6 @@ def get_named_beta_schedule(schedule_name, num_diffusion_timesteps):
         return betas_for_alpha_bar(
             num_diffusion_timesteps,
             lambda t: math.cos((t + 0.008) / 1.008 * math.pi / 2) ** 2,
-        )
-    elif schedule_name == "vp-sde":
-        beta_min = 0.1
-        beta_max = 20.0
-        return betas_for_alpha_bar(
-            num_diffusion_timesteps,
-            lambda t: np.exp(-beta_min*t - 0.5*(beta_max-beta_min)*(t**2)),
         )
     else:
         raise NotImplementedError(f"unknown beta schedule: {schedule_name}")
@@ -145,7 +136,7 @@ class GaussianDiffusion:
         assert (betas > 0).all() and (betas <= 1).all()
 
         self.num_timesteps = int(betas.shape[0])
-        
+
         alphas = 1.0 - betas
         self.alphas_cumprod = np.cumprod(alphas, axis=0)
         self.alphas_cumprod_prev = np.append(1.0, self.alphas_cumprod[:-1])
@@ -176,11 +167,6 @@ class GaussianDiffusion:
             * np.sqrt(alphas)
             / (1.0 - self.alphas_cumprod)
         )
-        
-        # pndm
-        self.counter = 0
-        self.cur_model_output = 0 
-        self.ets = []
 
     def q_mean_variance(self, x_start, t):
         """
@@ -420,7 +406,7 @@ class GaussianDiffusion:
         Sample x_{t-1} from the model at the given timestep.
 
         :param model: the model to sample from.
-        :param x: the current tensor at x_{t}.
+        :param x: the current tensor at x_{t-1}.
         :param t: the value of t, starting at 0 for the first diffusion step.
         :param clip_denoised: if True, clip the x_start prediction to [-1, 1].
         :param denoised_fn: if not None, a function which applies to the
@@ -598,38 +584,6 @@ class GaussianDiffusion:
         sample = mean_pred + nonzero_mask * sigma * noise
         return {"sample": sample, "pred_xstart": out["pred_xstart"]}
 
-    def ddim_step(
-        self,
-        x_t,
-        x_start,
-        t,
-        s,
-    ):
-        """
-        Sample x_{t-s} from the model using DDIM.
-        inputs are x_t and x_start
-        """
-        eps = self._predict_eps_from_xstart(x_t, t, x_start)
-        alpha_bar = _extract_into_tensor(self.alphas_cumprod, t, x_t.shape)                  # alphabar_t+1
-        alpha_bar_prev = _extract_into_tensor(self.alphas_cumprod_prev, t-s, x_t.shape)          # alphabar_t-s s = 0 ~ t
-        # sigma = (
-        #     eta
-        #     * th.sqrt((1 - alpha_bar_prev) / (1 - alpha_bar))
-        #     * th.sqrt(1 - alpha_bar / alpha_bar_prev)
-        # )
-        # # Equation 12.
-        # noise = th.randn_like(x_t)
-        mean_pred = (
-            x_start * th.sqrt(alpha_bar_prev)
-            + th.sqrt(1 - alpha_bar_prev) * eps
-            # + th.sqrt(1 - alpha_bar_prev - sigma ** 2) * eps
-        )
-        # nonzero_mask = (
-        #     (t != 0).float().view(-1, *([1] * (len(x_t.shape) - 1)))
-        # )  # no noise when t == 0
-        # sample = mean_pred + nonzero_mask * sigma * noise
-        return mean_pred 
-
     def ddim_reverse_sample(
         self,
         model,
@@ -680,7 +634,6 @@ class GaussianDiffusion:
         device=None,
         progress=False,
         eta=0.0,
-        indices=None,
     ):
         """
         Generate samples from the model using DDIM.
@@ -699,7 +652,6 @@ class GaussianDiffusion:
             device=device,
             progress=progress,
             eta=eta,
-            indices=indices,
         ):
             final = sample
         return final["sample"]
@@ -716,7 +668,6 @@ class GaussianDiffusion:
         device=None,
         progress=False,
         eta=0.0,
-        indices=None,
     ):
         """
         Use DDIM to sample from the model and yield intermediate samples from
@@ -731,8 +682,6 @@ class GaussianDiffusion:
             img = noise
         else:
             img = th.randn(*shape, device=device)
-        # if indices is None:
-
         indices = list(range(self.num_timesteps))[::-1]
 
         if progress:
@@ -740,6 +689,7 @@ class GaussianDiffusion:
             from tqdm.auto import tqdm
 
             indices = tqdm(indices)
+
         for i in indices:
             t = th.tensor([i] * shape[0], device=device)
             with th.no_grad():
@@ -755,7 +705,6 @@ class GaussianDiffusion:
                 )
                 yield out
                 img = out["sample"]
-
 
     def _vb_terms_bpd(
         self, model, x_start, x_t, t, clip_denoised=True, model_kwargs=None
@@ -791,10 +740,11 @@ class GaussianDiffusion:
         # otherwise return KL(q(x_{t-1}|x_t,x_0) || p(x_{t-1}|x_t))
         output = th.where((t == 0), decoder_nll, kl)
         return {"output": output, "pred_xstart": out["pred_xstart"]}
-    
+
     def training_losses(self, model, x_start, t, model_kwargs=None, noise=None):
         """
         Compute training losses for a single timestep.
+
         :param model: the model to evaluate loss on.
         :param x_start: the [N x C x ...] tensor of inputs.
         :param t: a batch of timestep indices.
@@ -865,206 +815,6 @@ class GaussianDiffusion:
             raise NotImplementedError(self.loss_type)
 
         return terms
-
-    def training_losses_G(self, model, discriminator,
-                          x_start, t, s, model_kwargs=None, noise=None, lossD_type="hinge"):
-        """
-        Compute training losses for a single timestep.
-
-        :param model: the model to evaluate loss on.
-        :param x_start: the [N x C x ...] tensor of inputs.
-        :param t: a batch of timestep indices.
-        :param model_kwargs: if not None, a dict of extra keyword arguments to
-            pass to the model. This can be used for conditioning.
-        :param noise: if specified, the specific Gaussian noise to try to remove.
-        :return: a dict with the key "loss" containing a tensor of shape [N].
-                 Some mean or variance settings may also have other keys.
-        """
-        # assert self.loss_type == LossType.MSE or self.loss_type == LossType.RESCALED_MSE
-        # assert self.model_var_type not in [ModelVarType.LEARNED, ModelVarType.LEARNED_RANGE,]
-        
-        if model_kwargs is None:
-            model_kwargs = {}
-        if noise is None:
-            noise = th.randn_like(x_start)
-        x_t = self.q_sample(x_start, t, noise=noise)
-        
-        terms = {}
-
-        if self.loss_type == LossType.KL or self.loss_type == LossType.RESCALED_KL:
-            terms["lossDM"] = self._vb_terms_bpd(
-                model=model,
-                x_start=x_start,
-                x_t=x_t,
-                t=t,
-                clip_denoised=False,
-                model_kwargs=model_kwargs,
-            )["output"]
-            if self.loss_type == LossType.RESCALED_KL:
-                terms["lossDM"] *= self.num_timesteps
-        elif self.loss_type == LossType.MSE or self.loss_type == LossType.RESCALED_MSE:
-            model_output = model(x_t, self._scale_timesteps(t), **model_kwargs)
-            vb = 0
-            if self.model_var_type in [
-                ModelVarType.LEARNED,
-                ModelVarType.LEARNED_RANGE,
-            ]:
-                B, C = x_t.shape[:2]
-                
-                assert model_output.shape == (B, C * 2, *x_t.shape[2:])
-                model_output, model_var_values = th.split(model_output, C, dim=1)
-                # Learn the variance using the variational bound, but don't let
-                # it affect our mean prediction.
-                frozen_out = th.cat([model_output.detach(), model_var_values], dim=1)
-                vb = self._vb_terms_bpd(
-                    model=lambda *args, r=frozen_out: r,
-                    x_start=x_start,
-                    x_t=x_t,
-                    t=t,
-                    clip_denoised=False,
-                )["output"]
-                if self.loss_type == LossType.RESCALED_MSE:
-                    # Divide by 1000 for equivalence with initial implementation.
-                    # Without a factor of 1/1000, the VB term hurts the MSE term.
-                    vb *= self.num_timesteps / 1000.0
-
-            target = {
-                ModelMeanType.PREVIOUS_X: 
-                    self.q_posterior_mean_variance(x_start=x_start, x_t=x_t, t=t)[0],
-                ModelMeanType.START_X: x_start,
-                ModelMeanType.EPSILON: noise,
-            }[self.model_mean_type]
-
-            assert model_output.shape == target.shape == x_start.shape
-            terms["lossDM"] = mean_flat((target - model_output) ** 2) + vb
-        else:
-            raise NotImplementedError(self.loss_type)
-
-        # model_output = model(x_t, self._scale_timesteps(t), **model_kwargs)
-        # target = {
-        #     ModelMeanType.PREVIOUS_X: 
-        #         self.q_posterior_mean_variance(x_start=x_start, x_t=x_t, t=t)[0],
-        #     ModelMeanType.START_X: x_start,
-        #     ModelMeanType.EPSILON: noise,
-        # }[self.model_mean_type]
-        
-        # assert model_output.shape == target.shape == x_start.shape
-
-        # terms["lossDM"] = mean_flat((target - model_output) ** 2)
-        
-        if discriminator:
-            x_start_hat = {
-                ModelMeanType.PREVIOUS_X: 
-                    self._predict_xstart_from_xprev(x_t, t, model_output),
-                ModelMeanType.START_X: model_output,
-                ModelMeanType.EPSILON: 
-                    self._predict_xstart_from_eps(x_t, t, model_output) 
-            }[self.model_mean_type]
-            
-            cond = None
-            if discriminator.module.t_dim == 1:    
-                time_cond = (t-s).unsqueeze(dim=1) 
-            elif discriminator.module.t_dim == 2:
-                time_cond = th.cat((t.unsqueeze(dim=1), s.unsqueeze(dim=1)), dim=1)
-            fake = self.ddim_step(x_t, x_start_hat, t, s)
-
-            # Generation loss
-            fake_pred = discriminator(fake, cond, time_cond).squeeze()
-            if lossD_type == "logistic":
-                lossG = F.softplus(-fake_pred)
-            elif lossD_type == "hinge":
-                lossG = -fake_pred
-            else:
-                raise Exception("Not implemented discriminator")
-            terms["lossG"] = lossG
-            
-        return terms
-
-    def training_losses_D(self, model, discriminator,
-                           x_start, t, s, model_kwargs=None, noise=None, lossD_type=""):
-        """
-        Compute training losses for a single timestep.
-
-        :param model: the model to evaluate loss on.
-        :param x_start: the [N x C x ...] tensor of inputs.
-        :param t: a batch of timestep indices.
-        :param model_kwargs: if not None, a dict of extra keyword arguments to
-            pass to the model. This can be used for conditioning.
-        :param noise: if specified, the specific Gaussian noise to try to remove.
-        :return: a dict with the key "loss" containing a tensor of shape [N].
-                 Some mean or variance settings may also have other keys.
-        """
-        # assert self.loss_type == LossType.MSE or self.loss_type == LossType.RESCALED_MSE
-        # assert self.model_var_type not in [ModelVarType.LEARNED, ModelVarType.LEARNED_RANGE,]
-        
-        if model_kwargs is None:
-            model_kwargs = {}
-        if noise is None:
-            noise = th.randn_like(x_start)
-        x_t = self.q_sample(x_start, t, noise=noise)
-
-        terms = {}
-        model_output = model(x_t, self._scale_timesteps(t), **model_kwargs)
-        
-        if self.model_var_type in [ModelVarType.LEARNED, ModelVarType.LEARNED_RANGE,]:            
-            B, C = x_t.shape[:2]
-            assert model_output.shape == (B, C * 2, *x_t.shape[2:])
-            model_output, model_var_values = th.split(model_output, C, dim=1)
-
-        target = {
-            ModelMeanType.PREVIOUS_X: 
-                self.q_posterior_mean_variance(x_start=x_start, x_t=x_t, t=t)[0],
-            ModelMeanType.START_X: x_start,
-            ModelMeanType.EPSILON: noise,
-        }[self.model_mean_type]
-
-        assert model_output.shape == target.shape == x_start.shape
-
-        if discriminator:
-            x_start_hat = {
-                ModelMeanType.PREVIOUS_X: 
-                    self._predict_xstart_from_xprev(x_t, t, model_output),
-                ModelMeanType.START_X: model_output,
-                ModelMeanType.EPSILON: 
-                    self._predict_xstart_from_eps(x_t, t, model_output) 
-            }[self.model_mean_type]
-            
-            # Set Discriminator target
-            cond = None
-            if discriminator.module.t_dim == 1:    
-                time_cond = (t-s).unsqueeze(dim=1)
-            elif discriminator.module.t_dim == 2:
-                time_cond = th.cat((t.unsqueeze(dim=1), s.unsqueeze(dim=1)), dim=1)
-            with th.no_grad():
-                real = self.ddim_step(x_t, x_start, t, s)
-                fake = self.ddim_step(x_t, x_start_hat, t, s)
-            real.requires_grad = True
-            
-            # Discriminator loss
-            d_real_pred = discriminator(real, cond, time_cond).squeeze()
-            d_fake_pred = discriminator(fake, cond, time_cond).squeeze()
-            
-            if lossD_type == "logistic":
-                lossD = F.softplus(-d_real_pred) + F.softplus(d_fake_pred)
-            elif lossD_type == "hinge":
-                hinge = th.nn.ReLU(inplace=True)
-                lossD = hinge(1.0 - d_real_pred) + hinge(1.0 + d_fake_pred)
-            else:
-                raise Exception("Not implemented discriminator")
-            terms["lossD"] = lossD
-
-            grad_real = th.autograd.grad(outputs=d_real_pred.sum(), 
-                                         inputs=real, create_graph=True)[0]
-            grad_penalty = (grad_real.view(grad_real.size(0), -1).norm(2, dim=1) ** 2)
-
-            terms["grad_penalty"] = grad_penalty
-            with th.no_grad():
-                terms["real_score"] = th.sigmoid(d_real_pred)
-                terms["fake_score"] = th.sigmoid(d_fake_pred)
-                terms["real_acc"] = (d_real_pred > 0.0).float()
-                terms["fake_acc"] = (d_fake_pred < 0.0).float()
-            
-        return terms    
 
     def _prior_bpd(self, x_start):
         """

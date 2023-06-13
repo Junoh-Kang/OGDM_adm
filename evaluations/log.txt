@@ -180,3 +180,15 @@ logs/celeba_64/ours_ft300k_0.10,0.025/fid/ema_0.9999_015000.pt/ddim20.npz
 FID: 4.703374438429165 Precision: 0.6913 Recall: 0.51536
 logs/celeba_64/ours_ft300k_0.10,0.025/fid/ema_0.9999_015000.pt/ddim10.npz
 FID: 8.306272346400561 Precision: 0.6915 Recall: 0.42834
+logs/lsun_church/baseline@uniform:2023-06-06-22-45-56-696540/fid/ema_0.9999_250000.pt/ddim50.npz
+FID: 14.566521973791907 Precision: 0.47564 Recall: 0.49526
+logs/lsun_church/baseline@uniform:2023-06-06-22-45-56-696540/fid/ema_0.9999_250000.pt/ddim20.npz
+FID: 15.96097044763843 Precision: 0.4504 Recall: 0.45562
+logs/lsun_church/baseline@uniform:2023-06-06-22-45-56-696540/fid/ema_0.9999_250000.pt/ddim10.npz
+FID: 22.511992300510656 Precision: 0.38596 Recall: 0.33466
+logs/lsun_church/finetune_250K@pair_T,0.20:2023-06-10-23-11-43-833075/fid/ema_0.9999_015000.pt/ddim50.npz
+FID: 90.19158664947116 Precision: 0.1054 Recall: 0.06624
+logs/lsun_church/finetune_250K@pair_T,0.20:2023-06-10-23-11-43-833075/fid/ema_0.9999_015000.pt/ddim20.npz
+FID: 111.7839232272836 Precision: 0.04276 Recall: 0.12972
+logs/lsun_church/finetune_250K@pair_T,0.20:2023-06-10-23-11-43-833075/fid/ema_0.9999_015000.pt/ddim10.npz
+FID: 116.05174222946943 Precision: 0.03336 Recall: 0.12228
