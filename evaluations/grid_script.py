@@ -7,19 +7,23 @@ os.chdir("/home/junoh/2022_DM/adm")
 save_dir = "logs/qual"
 nrow = 8
 ncol = 6
-num_grids = 10
+num_grids = 20
 
 project_dirs = [
     "logs/cifar10_32/baseline/fid/ema_0.9999_280000.pt",
-    "logs/cifar10_32/ours_ft280k_0.20,0.025/fid/ema_0.9999_015000.pt",
+    "logs/cifar10_32/ours_scratch_0.10,0.01/fid/ema_0.9999_210000.pt",
+    # "logs/cifar10_32/ours_ft280k_0.20,0.025/fid/ema_0.9999_015000.pt",
+
     # "logs/celeba_64/baseline/fid/ema_0.9999_300000.pt",
+    # "logs/celeba_64/ours_scratch_0.10,0.01/fid/ema_0.9999_300000.pt",
     # "logs/celeba_64/ours_ft300k_0.20,0.025/fid/ema_0.9999_015000.pt"
 
     # "logs/lsun_church/baseline@uniform:2023-06-06-22-45-56-696540/fid/ema_0.9999_250000.pt",
     # "logs/lsun_church/finetune_250K@pair_T,0.20:2023-06-10-23-11-43-833075/fid/ema_0.9999_015000.pt"
 ]
 sample_types = [
-    "ddim10", 
+    # "ddim10", 
+    "S-PNDM9",
 ]
 
 f = open("./evaluations/script.txt", 'w')

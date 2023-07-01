@@ -62,7 +62,7 @@ class Runner(object):
         self.schedule = schedule
         self.model = model
 
-    def sample_fid(self):
+    def sample_fid(self, noise=None):
         # pflow = True if self.args.method == 'PF' else False
         model = self.model
         device = self.device
@@ -77,8 +77,8 @@ class Runner(object):
         seq = range(0, self.diffusion_step-1, skip)
         seq_next = [-1] + list(seq[:-1])
         image_num = 0
-        
-        noise = th.randn(*self.size, device=self.device)
+        if noise is None:
+            noise = th.randn(*self.size, device=self.device)
         return self.sample_image(noise, seq, model, pflow)
         # if dist.get_rank() == 0:
         #     my_iter = tqdm(range(total_num // n + 1), ncols=120)
