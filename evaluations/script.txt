@@ -1,2 +1,0 @@
-python tools/grid_images.py logs/celeba_64/baseline/fid/ema_0.9999_300000.pt/ddim20.npz logs/qual/celeba/base/ddim20 --prefix 4x3 --nrow 4 --ncol 3 --num_grids 20
-python tools/grid_images.py logs/celeba_64/ours_scratch_0.10,0.01/fid/ema_0.9999_300000.pt/ddim20.npz logs/qual/celeba/scratch/ddim20 --prefix 4x3 --nrow 4 --ncol 3 --num_grids 20

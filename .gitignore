@@ -4,9 +4,10 @@ classify_image_graph_def.pb
 ./data/
 *.npz
 ./tools/
-./evaluations/grid_script.py
-./evaluations/log.txt
-./evaluations/sample_script.py
-./evaluations/script.txt
-./evaluations/teaser_group.py
-./evaluations/teaser.py
+evaluations/grid_script.py
+evaluations/log.txt
+evaluations/sample_script.py
+evaluations/script.txt
+evaluations/teaser_group.py
+evaluations/teaser.py
+
