@@ -3,7 +3,8 @@ __pycache__/
 classify_image_graph_def.pb
 ./data/
 *.npz
-./tools/
+tools
+evaluations/*
 evaluations/grid_script.py
 evaluations/log.txt
 evaluations/sample_script.py
