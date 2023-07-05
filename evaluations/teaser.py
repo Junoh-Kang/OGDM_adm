@@ -57,7 +57,9 @@ def main():
     #set sampling methods
     size = [args.batch_size, 3, args.image_size, args.image_size]
     diffusion_kwargs = args_to_dict(args, diffusion_defaults().keys())
-    th.manual_seed(0)
+
+    seed = 3
+    th.manual_seed(seed)
     noise = th.randn(size, device=dist_util.dev())
 
     args.sample_type = args.sampler.split(",")
@@ -116,7 +118,7 @@ def main():
                 images = th.cat(all_images)
                 for i, image in enumerate(images):
                     image = image.permute(1,2,0).numpy()
-                    Image.fromarray(image).save(f"logs/qual/teaser/individual/{10 + i}_{tag}_{sample_type}.png")
+                    Image.fromarray(image).save(f"logs/qual/teaser/individual/{seed*100 + i}_{tag}_{sample_type}.png")
     
             num_samples -= len(all_images) * size[0]
             num_sampled += len(all_images) * size[0]
