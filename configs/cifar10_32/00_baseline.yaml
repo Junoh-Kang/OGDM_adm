@@ -2,7 +2,7 @@
 log_dir: './logs'
 project: "cifar10_32"
 exp: "00_baseline"
-log: ["lossG_weight", "noise_schedule"]
+log: ["schedule_sampler","lossG_weight"]
 
 # data:
 data_dir: "./data/cifar10_32"
@@ -16,7 +16,7 @@ num_heads_upsample: -1
 num_head_channels: -1
 attention_resolutions: "16,8"
 channel_mult: ""
-dropout: 0.0
+dropout: 0.1
 class_cond: False
 use_scale_shift_norm: True
 resblock_updown: False
@@ -43,7 +43,7 @@ schedule_sampler: "uniform" # "pair, uniform"
 use_checkpoint: False
 resume_checkpoint: ""
 # batch
-batch_size: 64
+batch_size: 128
 microbatch: -1  # -1 disables microbatches
 # about losses
 lr_model: 1e-4
@@ -54,10 +54,10 @@ grad_weight: 0.5
 # saving
 ema_rate: '0.9999'
 log_interval: 10000
-save_interval: 100000
+save_interval: 10000
 sample_num: 64
 sample_type: ["ddim20","ddim10"]
 # etc
 fp16_scale_growth: 0.001
 weight_decay: 0.0
-lr_anneal_steps: 0
+lr_anneal_steps: 300000

@@ -16,7 +16,7 @@ pip install -e .
 python -m torch.distributed.launch --nproc_per_node=[N] scripts/image_train.py --config [config.yaml] --batch_size [B] --schedule_sampler pair_T,[k] --lossG_weight [gamma]
 
 # example
-python -m torch.distributed.launch --nproc_per_node=4 scripts/image_train.py --config configs/celeba_64/06_k=0.15.yaml --batch_size 32 --schedule_sampler pair_T,0.15 --lossG_weight 0.0025
+python -m torch.distributed.launch --nproc_per_node=4 scripts/image_train.py --config configs/celeba_64/06_k=0.1.yaml --batch_size 32 --schedule_sampler pair_T,0.15 --lossG_weight 0.0025
 ```
 # Model resume training 
 ```
@@ -38,4 +38,9 @@ python -m torch.distributed.launch --nproc_per_node=[N] scripts/image_sample.py 
 
 # example
 python -m torch.distributed.launch --nproc_per_node=4 scripts/image_sample.py --project_dir "logs/celeba_64/00_baseline@uniform,G=0.0:2023-04-08-21-25-49-813419" --pt_name "ema_0.9999_200000.pt" --num_samples 50000 --batch_size 512 --sampler "ddim100,ddim10,ddim5" --eta 0
+```
+
+# Evaluation
+```
+    python scripts/fid_prdc.py [reference] [sample] -save_act_path [ref.npz]
 ```
