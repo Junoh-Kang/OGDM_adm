@@ -64,7 +64,7 @@ to evaluate.
 We provide trained models for CIFAR-10, and CelebA.
 The downloaded files should look like this:
 ```
-├── project
+└── project
     ├── config.yaml  
     └── models 
         ├── ema_xxxxxx.pt
