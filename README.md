@@ -72,11 +72,11 @@ The downloaded files should look like this:
 
 Here are links to download:
 
-- [CIFAR-10 baseline]()
-- [CIFAR-10 obsdiff(scratch)]()
-- [CIFAR-10 obsdiff(ft,k=0.15)]()
-- [CIFAR-10 obsdiff(ft,k=0.20)]()
-- [CelebA baseline]()
-- [CelebA obsdiff(scratch)]()
-- [CelebA obsdiff(ft, k=0.15)]()
-- [CelebA obsdiff(ft, k=0.20)]()
+- [CIFAR-10 baseline](https://drive.google.com/file/d/1F7deiE3_hAITp-G74B4s61PWyWnKcjT5/view?usp=drive_link)
+- [CIFAR-10 obsdiff(scratch)](https://drive.google.com/file/d/1F7deiE3_hAITp-G74B4s61PWyWnKcjT5/view?usp=drive_link)
+- [CIFAR-10 obsdiff(ft,k=0.15)](https://drive.google.com/file/d/1wsMu1nZ9q4efzUWmmnThy0XcSuwt3Y81/view?usp=drive_link)
+- [CIFAR-10 obsdiff(ft,k=0.20)](https://drive.google.com/file/d/1HzFaFIhtd10GyU_jXqZN5UQw84HC9FGZ/view?usp=drive_link)
+- [CelebA baseline](https://drive.google.com/file/d/1rVF8gO7QPF5E_2fZBSywMLAKrtt3ddt3/view?usp=drive_link)
+- [CelebA obsdiff(scratch)](https://drive.google.com/file/d/1giccdeqoAURBuXvg0XfXW25vj1UtaTte/view?usp=drive_link)
+- [CelebA obsdiff(ft, k=0.15)](https://drive.google.com/file/d/1jop4N4Y5lwz3k4mW7I3g6s218wi3hgr7/view?usp=drive_link)
+- [CelebA obsdiff(ft, k=0.20)](https://drive.google.com/file/d/11A1YubnEtNxXKPllCaBh3YmPLq6nz1gh/view?usp=drive_link)
