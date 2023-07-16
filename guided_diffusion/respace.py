@@ -30,9 +30,12 @@ def space_timesteps(num_timesteps, section_counts, skip_type="uniform"):
         if section_counts.startswith("ddim"):
             desired_count = int(section_counts[len("ddim") :])
             if skip_type=="uniform":
-                for i in range(1, num_timesteps):
-                    if len(range(0, num_timesteps, i)) == desired_count:
-                        return set(range(0, num_timesteps, i))
+                skip = float(num_timesteps / desired_count)
+                seq = [int(skip * i) for i in range(desired_count)]
+                return set(seq)
+                # for i in range(1, num_timesteps):
+                #     if len(range(0, num_timesteps, i)) == desired_count:
+                #         return set(range(0, num_timesteps, i))
             elif skip_type=="quad":
                 for i in range(1, num_timesteps):
                     seq = (

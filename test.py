@@ -9,8 +9,8 @@ def f(n):
 def g(n):
     skip = float(1000/n)
     seq = [int(skip*i) for i in range(n)]
-    print(len(seq), list(seq))
-
+    # print(len(seq), list(seq))
+    return n == len(seq)
 
 breakpoint()
 
