@@ -70,15 +70,10 @@ class Runner(object):
         model.eval()
 
         n = self.size[0]
-        # total_num = self.total_num
 
-        #skip = self.diffusion_step // self.sample_speed
-        # fix this part
-        for skip in range(1, self.diffusion_step-1):
-            if len(range(0, self.diffusion_step-1, skip)) == self.sample_speed:
-                break
-        seq = range(0, self.diffusion_step-1, skip)
-        seq_next = [-1] + list(seq[:-1])
+        skip = float(self.diffusion_step / self.sample_speed)
+        seq = [int(skip * i) for i in range(self.sample_speed)]
+
         image_num = 0
         if noise is None:
             noise = th.randn(*self.size, device=self.device)
