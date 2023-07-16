@@ -72,8 +72,11 @@ class Runner(object):
         n = self.size[0]
         # total_num = self.total_num
 
-        skip = self.diffusion_step // self.sample_speed
+        #skip = self.diffusion_step // self.sample_speed
         # fix this part
+        for skip in range(1, self.diffusion_step-1):
+            if len(range(0, self.diffusion_step-1, skip)) == self.sample_speed:
+                break
         seq = range(0, self.diffusion_step-1, skip)
         seq_next = [-1] + list(seq[:-1])
         image_num = 0
