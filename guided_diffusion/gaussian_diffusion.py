@@ -612,23 +612,32 @@ class GaussianDiffusion:
         eps = self._predict_eps_from_xstart(x_t, t, x_start)
         alpha_bar = _extract_into_tensor(self.alphas_cumprod, t, x_t.shape)                  # alphabar_t+1
         alpha_bar_prev = _extract_into_tensor(self.alphas_cumprod_prev, t-s, x_t.shape)          # alphabar_t-s s = 0 ~ t
-        # sigma = (
-        #     eta
-        #     * th.sqrt((1 - alpha_bar_prev) / (1 - alpha_bar))
-        #     * th.sqrt(1 - alpha_bar / alpha_bar_prev)
-        # )
-        # # Equation 12.
-        # noise = th.randn_like(x_t)
         mean_pred = (
             x_start * th.sqrt(alpha_bar_prev)
             + th.sqrt(1 - alpha_bar_prev) * eps
-            # + th.sqrt(1 - alpha_bar_prev - sigma ** 2) * eps
         )
-        # nonzero_mask = (
-        #     (t != 0).float().view(-1, *([1] * (len(x_t.shape) - 1)))
-        # )  # no noise when t == 0
-        # sample = mean_pred + nonzero_mask * sigma * noise
-        return mean_pred 
+
+        return mean_pred
+
+    # def improved_eular(
+    #     self,
+    #     x_t,
+    #     x_start,
+    #     t,
+    #     s,
+    # ): 
+    #     pass
+    
+    # def improved_eular(x, t, t_next, model, alphas_cump, ets):
+    #     e_1 = model(x, t)
+    #     ets.append(e_1)
+    #     x_2 = transfer(x, t, t_next, e_1, alphas_cump)
+
+    #     e_2 = model(x_2, t_next)
+    #     et = (e_1 + e_2) / 2
+    #     # x_next = transfer(x, t, t_next, et, alphas_cump)
+
+    #     return et
 
     def ddim_reverse_sample(
         self,
@@ -939,18 +948,6 @@ class GaussianDiffusion:
             terms["lossDM"] = mean_flat((target - model_output) ** 2) + vb
         else:
             raise NotImplementedError(self.loss_type)
-
-        # model_output = model(x_t, self._scale_timesteps(t), **model_kwargs)
-        # target = {
-        #     ModelMeanType.PREVIOUS_X: 
-        #         self.q_posterior_mean_variance(x_start=x_start, x_t=x_t, t=t)[0],
-        #     ModelMeanType.START_X: x_start,
-        #     ModelMeanType.EPSILON: noise,
-        # }[self.model_mean_type]
-        
-        # assert model_output.shape == target.shape == x_start.shape
-
-        # terms["lossDM"] = mean_flat((target - model_output) ** 2)
         
         if discriminator:
             x_start_hat = {
