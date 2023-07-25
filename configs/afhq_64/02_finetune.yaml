@@ -49,7 +49,7 @@ microbatch: -1  # -1 disables microbatches
 lr_model: 1e-4
 lr_disc: 1e-4
 lossD_type: "hinge"
-lossG_weight: 0.01 #0.001
+lossG_weight: 0.025 #0.001
 grad_weight: 0.5
 # saving
 ema_rate: '0.9999'
