@@ -31,7 +31,7 @@ t_dim: 2
 learn_sigma: False
 diffusion_steps: 1000
 noise_schedule: "linear"
-timestep_respacing: "ddim1000"
+timestep_respacing: ""
 use_kl: False
 predict_xstart: False
 rescale_timesteps: False

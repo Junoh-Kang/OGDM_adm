@@ -84,7 +84,7 @@ def main():
         if dist.get_rank() == 0:
             start = time.time()
             print(f"sampling {sample_type}")
-        
+                
         num_samples = args.num_samples
         num_sampled = 0
         all_images = []
