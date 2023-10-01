@@ -1,10 +1,12 @@
 # Observation-Guided Diffusion Probabilistic Models
 This is the codebase for [Observation-Guided DIffusion Probabilistic Models]. This repository is based on [openai/guided-diffusion](https://github.com/openai/guided-diffusion).
 
+The repository for EDM baseline can be found at [Junoh-Kang/observation-guided-diffusion_edm](https://github.com/Junoh-Kang/observation-guided-diffusion_edm)
+
 # Dependencies
 We share the environment of the code by docker.
 ```
-docker pull snucvlab/obsdiff:env
+docker pull snucvlab/ogdm:adm
 ```
 
 To install all pacakges in this codebase along with their dependencies, run
@@ -47,7 +49,7 @@ python -m torch.distributed.launch --nproc_per_node=4 scripts/image_sample.py --
 # Evaluation
 We share the environment of the evaluation code by docker.
 ```
-docker pull snucvlab/obsdiff:fid
+docker pull snucvlab/ogdm:fid
 ```
 
 Then, run
