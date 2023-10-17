@@ -77,15 +77,15 @@ Here are links to download and wget commands.
   ```
   wget --load-cookies /tmp/cookies.txt "https://docs.google.com/uc?export=download&confirm=$(wget --quiet --save-cookies /tmp/cookies.txt --keep-session-cookies --no-check-certificate 'https://docs.google.com/uc?export=download&id=1F7deiE3_hAITp-G74B4s61PWyWnKcjT5' -O- | sed -rn 's/.*confirm=([0-9A-Za-z_]+).*/\1\n/p')&id=1F7deiE3_hAITp-G74B4s61PWyWnKcjT5" -O cifar10_baseline.tar.gz && rm -rf /tmp/cookies.txt
   ```
-- CIFAR-10 obsdiff (scratch): [cifar10_scratch.tar.gz](https://drive.google.com/file/d/1JPYc1hPJRD6aksvkAKVzr5QBW8AF56nq/view?usp=sharing)
+- CIFAR-10 OGDM (scratch): [cifar10_scratch.tar.gz](https://drive.google.com/file/d/1JPYc1hPJRD6aksvkAKVzr5QBW8AF56nq/view?usp=sharing)
   ```
   wget --load-cookies /tmp/cookies.txt "https://docs.google.com/uc?export=download&confirm=$(wget --quiet --save-cookies /tmp/cookies.txt --keep-session-cookies --no-check-certificate 'https://docs.google.com/uc?export=download&id=1JPYc1hPJRD6aksvkAKVzr5QBW8AF56nq' -O- | sed -rn 's/.*confirm=([0-9A-Za-z_]+).*/\1\n/p')&id=1JPYc1hPJRD6aksvkAKVzr5QBW8AF56nq" -O cifar10_scratch.tar.gz && rm -rf /tmp/cookies.txt
   ```
-- CIFAR-10 obsdiff (ft,k=0.15): [cifar10_ft_0.15.tar.gz](https://drive.google.com/file/d/1wsMu1nZ9q4efzUWmmnThy0XcSuwt3Y81/view?usp=sharing)
+- CIFAR-10 OGDM (ft,k=0.15): [cifar10_ft_0.15.tar.gz](https://drive.google.com/file/d/1wsMu1nZ9q4efzUWmmnThy0XcSuwt3Y81/view?usp=sharing)
   ```
   wget --load-cookies /tmp/cookies.txt "https://docs.google.com/uc?export=download&confirm=$(wget --quiet --save-cookies /tmp/cookies.txt --keep-session-cookies --no-check-certificate 'https://docs.google.com/uc?export=download&id=1wsMu1nZ9q4efzUWmmnThy0XcSuwt3Y81' -O- | sed -rn 's/.*confirm=([0-9A-Za-z_]+).*/\1\n/p')&id=1wsMu1nZ9q4efzUWmmnThy0XcSuwt3Y81" -O cifar10_ft_0.15.tar.gz && rm -rf /tmp/cookies.txt
   ```
-- CIFAR-10 obsdiff (ft,k=0.20): [cifar10_ft_0.20.tar.gz](https://drive.google.com/file/d/1HzFaFIhtd10GyU_jXqZN5UQw84HC9FGZ/view?usp=sharing)
+- CIFAR-10 OGDM (ft,k=0.20): [cifar10_ft_0.20.tar.gz](https://drive.google.com/file/d/1HzFaFIhtd10GyU_jXqZN5UQw84HC9FGZ/view?usp=sharing)
   ```
   wget --load-cookies /tmp/cookies.txt "https://docs.google.com/uc?export=download&confirm=$(wget --quiet --save-cookies /tmp/cookies.txt --keep-session-cookies --no-check-certificate 'https://docs.google.com/uc?export=download&id=1HzFaFIhtd10GyU_jXqZN5UQw84HC9FGZ' -O- | sed -rn 's/.*confirm=([0-9A-Za-z_]+).*/\1\n/p')&id=1HzFaFIhtd10GyU_jXqZN5UQw84HC9FGZ" -O cifar10_ft_0.20.tar.gz && rm -rf /tmp/cookies.txt
   ```
@@ -93,15 +93,15 @@ Here are links to download and wget commands.
   ```
   wget --load-cookies /tmp/cookies.txt "https://docs.google.com/uc?export=download&confirm=$(wget --quiet --save-cookies /tmp/cookies.txt --keep-session-cookies --no-check-certificate 'https://docs.google.com/uc?export=download&id=1rVF8gO7QPF5E_2fZBSywMLAKrtt3ddt3' -O- | sed -rn 's/.*confirm=([0-9A-Za-z_]+).*/\1\n/p')&id=1rVF8gO7QPF5E_2fZBSywMLAKrtt3ddt3" -O celeba_baseline.tar.gz && rm -rf /tmp/cookies.txt
   ```
-- CelebA obsdiff (scratch): [celeba_scratch.tar.gz](https://drive.google.com/file/d/1giccdeqoAURBuXvg0XfXW25vj1UtaTte/view?usp=sharing)
+- CelebA OGDM (scratch): [celeba_scratch.tar.gz](https://drive.google.com/file/d/1giccdeqoAURBuXvg0XfXW25vj1UtaTte/view?usp=sharing)
   ```
   wget --load-cookies /tmp/cookies.txt "https://docs.google.com/uc?export=download&confirm=$(wget --quiet --save-cookies /tmp/cookies.txt --keep-session-cookies --no-check-certificate 'https://docs.google.com/uc?export=download&id=1giccdeqoAURBuXvg0XfXW25vj1UtaTte' -O- | sed -rn 's/.*confirm=([0-9A-Za-z_]+).*/\1\n/p')&id=1giccdeqoAURBuXvg0XfXW25vj1UtaTte" -O celeba_scratch.tar.gz && rm -rf /tmp/cookies.txt
   ```
-- CelebA obsdiff (ft, k=0.15): [celeba_ft_0.15.tar.gz](https://drive.google.com/file/d/1jop4N4Y5lwz3k4mW7I3g6s218wi3hgr7/view?usp=sharing)
+- CelebA OGDM (ft, k=0.15): [celeba_ft_0.15.tar.gz](https://drive.google.com/file/d/1jop4N4Y5lwz3k4mW7I3g6s218wi3hgr7/view?usp=sharing)
   ```
   wget --load-cookies /tmp/cookies.txt "https://docs.google.com/uc?export=download&confirm=$(wget --quiet --save-cookies /tmp/cookies.txt --keep-session-cookies --no-check-certificate 'https://docs.google.com/uc?export=download&id=1jop4N4Y5lwz3k4mW7I3g6s218wi3hgr7' -O- | sed -rn 's/.*confirm=([0-9A-Za-z_]+).*/\1\n/p')&id=1jop4N4Y5lwz3k4mW7I3g6s218wi3hgr7" -O celeba_ft_0.15.tar.gz && rm -rf /tmp/cookies.txt
   ```
-- CelebA obsdiff (ft, k=0.20): [celeba_ft_0.20.tar.gz](https://drive.google.com/file/d/11A1YubnEtNxXKPllCaBh3YmPLq6nz1gh/view?usp=sharing)
+- CelebA OGDM (ft, k=0.20): [celeba_ft_0.20.tar.gz](https://drive.google.com/file/d/11A1YubnEtNxXKPllCaBh3YmPLq6nz1gh/view?usp=sharing)
     ```
     wget --load-cookies /tmp/cookies.txt "https://docs.google.com/uc?export=download&confirm=$(wget --quiet --save-cookies /tmp/cookies.txt --keep-session-cookies --no-check-certificate 'https://docs.google.com/uc?export=download&id=11A1YubnEtNxXKPllCaBh3YmPLq6nz1gh' -O- | sed -rn 's/.*confirm=([0-9A-Za-z_]+).*/\1\n/p')&id=11A1YubnEtNxXKPllCaBh3YmPLq6nz1gh" -O celeba_ft_0.20.tar.gz && rm -rf /tmp/cookies.txt
     ```
