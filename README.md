@@ -1,7 +1,7 @@
 # Observation-Guided Diffusion Probabilistic Models
-This is the codebase for [Observation-Guided DIffusion Probabilistic Models]. This repository is based on [openai/guided-diffusion](https://github.com/openai/guided-diffusion).
+This is the codebase for [Observation-Guided DIffusion Probabilistic Models](https://arxiv.org/abs/2310.04041). This repository is based on [openai/guided-diffusion](https://github.com/openai/guided-diffusion).
 
-The repository for EDM baseline can be found at [Junoh-Kang/observation-guided-diffusion_edm](https://github.com/Junoh-Kang/observation-guided-diffusion_edm)
+The repository for EDM baseline can be found at [Junoh-Kang/OGDM_edm](https://github.com/Junoh-Kang/OGDM_edm)
 
 # Dependencies
 We share the environment of the code by docker.
@@ -68,11 +68,11 @@ The downloaded files should look like this:
 ```
 └── project
     ├── config.yaml  
-    └── models 
-        ├── ema_xxxxxx.pt
+    └── models
+        └── ema_xxxxxx.pt
 ```
 
-Here are links to download and wget commands
+Here are links to download and wget commands.
 - CIFAR-10 baseline: [cifar10_baseline.tar.gz](https://drive.google.com/file/d/1F7deiE3_hAITp-G74B4s61PWyWnKcjT5/view?usp=sharing)
   ```
   wget --load-cookies /tmp/cookies.txt "https://docs.google.com/uc?export=download&confirm=$(wget --quiet --save-cookies /tmp/cookies.txt --keep-session-cookies --no-check-certificate 'https://docs.google.com/uc?export=download&id=1F7deiE3_hAITp-G74B4s61PWyWnKcjT5' -O- | sed -rn 's/.*confirm=([0-9A-Za-z_]+).*/\1\n/p')&id=1F7deiE3_hAITp-G74B4s61PWyWnKcjT5" -O cifar10_baseline.tar.gz && rm -rf /tmp/cookies.txt
@@ -105,3 +105,16 @@ Here are links to download and wget commands
     ```
     wget --load-cookies /tmp/cookies.txt "https://docs.google.com/uc?export=download&confirm=$(wget --quiet --save-cookies /tmp/cookies.txt --keep-session-cookies --no-check-certificate 'https://docs.google.com/uc?export=download&id=11A1YubnEtNxXKPllCaBh3YmPLq6nz1gh' -O- | sed -rn 's/.*confirm=([0-9A-Za-z_]+).*/\1\n/p')&id=11A1YubnEtNxXKPllCaBh3YmPLq6nz1gh" -O celeba_ft_0.20.tar.gz && rm -rf /tmp/cookies.txt
     ```
+
+# Citation
+```
+@inproceedings{kang2023odgm,
+  author    = {Junoh Kang and Jinyoung Choi and Sungik Choi and Bohyung Han},
+  title     = {Observation-Guided Diffusion Probabilistic Models},
+  booktitle = {},
+  year      = {2023}
+}
+```
+
+# Acknowledgments
+
