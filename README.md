@@ -1,6 +1,5 @@
 # Observation-Guided Diffusion Probabilistic Models
 This is the codebase for [Observation-Guided DIffusion Probabilistic Models](https://arxiv.org/abs/2310.04041). This repository is based on [openai/guided-diffusion](https://github.com/openai/guided-diffusion).
-
 The repository for EDM baseline can be found at [Junoh-Kang/OGDM_edm](https://github.com/Junoh-Kang/OGDM_edm)
 
 # Dependencies
